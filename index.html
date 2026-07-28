@@ -11,15 +11,32 @@
     <!-- HTML5-QRCode Scanner Library CDN -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
-        /* Sembunyikan scrollbar bawaan tapi tetap bisa discroll */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Sembunyikan elemen aplikasi saat cetak, dan tampilkan KHUSUS struk */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .no-print, header, nav, main, #modal-struk { 
+                display: none !important; 
+            }
+            #area-struk-print { 
+                display: block !important;
+                width: 100% !important;
+                max-width: 58mm; /* Ukuran standar kertas nota thermal */
+                margin: 0 auto;
+                padding: 0;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 11px;
+                color: #000 !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-20 md:pb-6">
 
     <!-- HEADER / NAVBAR -->
-    <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-40">
+    <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-40 no-print">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-store text-xl"></i>
@@ -32,7 +49,7 @@
     </header>
 
     <!-- NAVIGATION TABS -->
-    <nav class="bg-white border-b border-slate-200 sticky top-[52px] z-30 shadow-sm">
+    <nav class="bg-white border-b border-slate-200 sticky top-[52px] z-30 shadow-sm no-print">
         <div class="max-w-4xl mx-auto flex text-center font-semibold text-sm">
             <button id="tab-btn-kasir" onclick="gantiTab('kasir')" class="flex-1 py-3 border-b-2 border-indigo-600 text-indigo-600 flex items-center justify-center gap-2">
                 <i class="fa-solid fa-cash-register"></i> Kasir
@@ -47,7 +64,7 @@
     </nav>
 
     <!-- MAIN CONTAINER -->
-    <main class="max-w-4xl mx-auto p-4">
+    <main class="max-w-4xl mx-auto p-4 no-print">
 
         <!-- ==================== TAB 1: KASIR ==================== -->
         <section id="tab-kasir" class="block space-y-4">
@@ -68,7 +85,7 @@
                     </button>
                 </div>
 
-                <!-- Video Stream Scanner (Awalnya Tersembunyi) -->
+                <!-- Video Stream Scanner -->
                 <div id="wrapper-kamera-kasir" class="hidden overflow-hidden rounded-lg border-2 border-indigo-500 bg-black">
                     <div id="reader-kasir" class="w-full"></div>
                 </div>
@@ -80,8 +97,8 @@
                     <span>Pilih Produk</span>
                     <span id="total-jenis-barang" class="text-xs font-normal text-slate-500">0 Produk</span>
                 </h2>
-                <div id="grid-produk-kasir" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-72 overflow-y-auto p-1">
-                    <!-- Item produk disuntik via JavaScript -->
+                <div id="grid-produk-kasir" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-64 overflow-y-auto p-1">
+                    <!-- Item produk disuntik via JS -->
                 </div>
             </div>
 
@@ -94,16 +111,33 @@
                     <button onclick="kosongkanKeranjang()" class="text-xs text-red-500 hover:underline">Kosongkan</button>
                 </div>
 
-                <div id="list-keranjang" class="divide-y divide-slate-100 max-h-56 overflow-y-auto">
+                <div id="list-keranjang" class="divide-y divide-slate-100 max-h-48 overflow-y-auto">
                     <!-- Item keranjang disuntik via JS -->
                 </div>
 
-                <!-- Summary & Pembayaran -->
-                <div class="pt-2 border-t border-slate-200 space-y-2">
-                    <div class="flex justify-between text-slate-600 text-sm">
-                        <span>Total Harga</span>
-                        <span id="total-harga" class="font-bold text-indigo-600 text-lg">Rp 0</span>
+                <!-- Summary & Pembayaran Tunai -->
+                <div class="pt-3 border-t border-slate-200 space-y-3">
+                    <div class="flex justify-between items-center text-slate-700 text-sm">
+                        <span class="font-medium">Total Harga</span>
+                        <span id="total-harga" class="font-bold text-indigo-600 text-xl">Rp 0</span>
                     </div>
+
+                    <!-- Input Uang Tunai & Kembalian -->
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                        <div class="flex justify-between items-center gap-2">
+                            <label class="text-xs font-bold text-slate-600">Uang Tunai (Rp):</label>
+                            <button onclick="setUangPas()" class="text-[11px] bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-2 py-0.5 rounded">
+                                Uang Pas
+                            </button>
+                        </div>
+                        <input type="number" id="input-tunai" oninput="hitungKembalian()" placeholder="Masukkan nominal pembayaran..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        
+                        <div class="flex justify-between items-center pt-1 text-sm">
+                            <span class="font-medium text-slate-600">Kembalian:</span>
+                            <span id="text-kembalian" class="font-bold text-slate-800">Rp 0</span>
+                        </div>
+                    </div>
+
                     <button onclick="prosesTransaksi()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 text-sm transition">
                         <i class="fa-solid fa-paper-plane"></i> Selesaikan Transaksi
                     </button>
@@ -221,6 +255,38 @@
 
     </main>
 
+    <!-- ==================== MODAL STRUK (LAYAR HP/LAPTOP) ==================== -->
+    <div id="modal-struk" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 no-print">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-2xl">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2 text-xl">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-lg">Transaksi Berhasil!</h3>
+                <p class="text-xs text-slate-500">Preview struk pembayaran di bawah ini:</p>
+            </div>
+
+            <!-- Preview Struk Visual di Layar -->
+            <div id="preview-struk-modal" class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs font-mono text-slate-800 max-h-60 overflow-y-auto space-y-1">
+                <!-- Disuntik via JS -->
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="cetakStruk()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-print"></i> Cetak Struk
+                </button>
+                <button onclick="tutupModalStruk()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-xl font-semibold text-sm">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AREA STRUK KHUSUS PRINT (DITAMPILKAN KETIKA DITETAK KE PRINTER) -->
+    <div id="area-struk-print" class="hidden">
+        <!-- Disuntik via JS -->
+    </div>
+
     <!-- ==================== JAVASCRIPT ==================== -->
     <script>
         // --- DATA STATE (LOCAL STORAGE) ---
@@ -275,7 +341,7 @@
             if (tabName === 'laporan') muatLaporan();
         }
 
-        // --- OPTIMASI KAMERA SCANNER (SUPER FAST) ---
+        // --- OPTIMASI KAMERA SCANNER ---
         function matikanSemuaKamera() {
             if (html5QrCodeKasir) {
                 html5QrCodeKasir.stop().then(() => {
@@ -459,6 +525,8 @@
             if (keranjang.length === 0) {
                 list.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">Keranjang masih kosong</p>`;
                 document.getElementById('total-harga').innerText = formatRupiah(0);
+                document.getElementById('input-tunai').value = '';
+                hitungKembalian();
                 return;
             }
 
@@ -486,6 +554,38 @@
             });
 
             document.getElementById('total-harga').innerText = formatRupiah(total);
+            hitungKembalian();
+        }
+
+        function getTotalHarga() {
+            return keranjang.reduce((total, item) => total + (item.price * item.qty), 0);
+        }
+
+        function hitungKembalian() {
+            const total = getTotalHarga();
+            const tunai = Number(document.getElementById('input-tunai').value) || 0;
+            const elemKembalian = document.getElementById('text-kembalian');
+
+            if (tunai === 0) {
+                elemKembalian.innerText = formatRupiah(0);
+                elemKembalian.className = "font-bold text-slate-800";
+                return;
+            }
+
+            const kembalian = tunai - total;
+            if (kembalian >= 0) {
+                elemKembalian.innerText = formatRupiah(kembalian);
+                elemKembalian.className = "font-bold text-emerald-600";
+            } else {
+                elemKembalian.innerText = `Kurang ${formatRupiah(Math.abs(kembalian))}`;
+                elemKembalian.className = "font-bold text-red-500";
+            }
+        }
+
+        function setUangPas() {
+            const total = getTotalHarga();
+            document.getElementById('input-tunai').value = total > 0 ? total : '';
+            hitungKembalian();
         }
 
         function ubahQty(id, delta) {
@@ -507,6 +607,7 @@
 
         function kosongkanKeranjang() {
             keranjang = [];
+            document.getElementById('input-tunai').value = '';
             muatKeranjang();
         }
 
@@ -516,9 +617,17 @@
                 return;
             }
 
-            let totalTx = 0;
+            const totalTx = getTotalHarga();
+            const tunai = Number(document.getElementById('input-tunai').value) || 0;
+
+            if (tunai < totalTx) {
+                alert(`Uang tunai kurang! Kurang ${formatRupiah(totalTx - tunai)}`);
+                return;
+            }
+
+            const kembalian = tunai - totalTx;
+
             keranjang.forEach(item => {
-                totalTx += item.price * item.qty;
                 const produk = produkList.find(p => Number(p.id) === Number(item.id));
                 if (produk) {
                     produk.stock -= item.qty;
@@ -529,7 +638,9 @@
                 id: Date.now(),
                 waktu: new Date().toLocaleString('id-ID'),
                 items: [...keranjang],
-                total: totalTx
+                total: totalTx,
+                tunai: tunai,
+                kembalian: kembalian
             };
 
             laporanList.unshift(transaksiBaru);
@@ -537,10 +648,63 @@
             simpanLocalProduk();
             simpanLocalLaporan();
 
+            // Tampilkan Modal Struk & Siapkan Layout Cetak
+            bukaModalStruk(transaksiBaru);
+
             kosongkanKeranjang();
             muatProdukKasir();
+        }
 
-            alert("✅ Transaksi Berhasil Diperbarui!");
+        // --- FUNGSI CETAK STRUK PERBAIKAN ---
+        function bukaModalStruk(tx) {
+            const previewModal = document.getElementById('preview-struk-modal');
+            const areaPrint = document.getElementById('area-struk-print');
+
+            let itemRows = tx.items.map(i => `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                    <span>${i.name} (${i.qty}x)</span>
+                    <span>${formatRupiah(i.price * i.qty)}</span>
+                </div>
+            `).join('');
+
+            let htmlStruk = `
+                <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
+                    <div style="font-size: 14px;">WARUNG ZAHRA</div>
+                    <div style="font-size: 10px; font-weight: normal;">Sedia Sembako & Kebutuhan Harian</div>
+                </div>
+                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                <div style="font-size: 10px; margin-bottom: 6px;">Tgl: ${tx.waktu}</div>
+                <div>${itemRows}</div>
+                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                    <span>TOTAL</span>
+                    <span>${formatRupiah(tx.total)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Bayar</span>
+                    <span>${formatRupiah(tx.tunai)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Kembali</span>
+                    <span>${formatRupiah(tx.kembalian)}</span>
+                </div>
+                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                <div style="text-align: center; font-size: 10px; margin-top: 6px;">
+                    *** Terima Kasih ***<br>Selamat Berbelanja Kembali
+                </div>
+            `;
+
+            previewModal.innerHTML = htmlStruk;
+            areaPrint.innerHTML = htmlStruk;
+            document.getElementById('modal-struk').classList.remove('hidden');
+        }
+
+        function cetakStruk() {
+            window.print();
+        }
+
+        function tutupModalStruk() {
+            document.getElementById('modal-struk').classList.add('hidden');
         }
 
         // --- FUNGSI TAB STOK ---
@@ -651,7 +815,7 @@
             laporanList.forEach(tx => {
                 omset += tx.total;
                 const div = document.createElement('div');
-                div.className = "py-3 space-y-1 text-xs";
+                div.className = "py-3 space-y-1 text-xs border-b border-slate-100";
                 
                 let itemStr = tx.items.map(i => `${i.name} (${i.qty}x)`).join(', ');
 
@@ -661,6 +825,12 @@
                         <span class="text-emerald-600">${formatRupiah(tx.total)}</span>
                     </div>
                     <div class="text-slate-500 text-[11px] truncate">${itemStr}</div>
+                    <div class="flex justify-between items-center pt-1">
+                        <span class="text-[10px] text-slate-400">Bayar: ${formatRupiah(tx.tunai)} | Kembali: ${formatRupiah(tx.kembalian)}</span>
+                        <button onclick='bukaModalStruk(${JSON.stringify(tx)})' class="text-[11px] text-indigo-600 hover:underline font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-print"></i> Struk
+                        </button>
+                    </div>
                 `;
                 list.appendChild(div);
             });
