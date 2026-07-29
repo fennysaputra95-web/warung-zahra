@@ -12,7 +12,7 @@
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         @media print {
-            body { background: white !important; color: black !important; }
+            body { background: white !important; color: black !important; margin: 0; padding: 0; }
             .no-print, header, nav, main, #modal-struk { display: none !important; }
             #area-struk-print { 
                 display: block !important;
@@ -131,7 +131,7 @@
                                 Uang Pas
                             </button>
                         </div>
-                        <input type="number" id="input-tunai" oninput="hitungKembalian()" placeholder="Masukkan nominal pembayaran..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <input type="number" id="input-tunai" oninput="hitungKembalian()" min="0" placeholder="Masukkan nominal..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         
                         <div class="flex justify-between items-center pt-1 text-sm">
                             <span class="font-medium text-slate-600">Kembalian:</span>
@@ -163,7 +163,7 @@
                         <label class="block text-xs font-medium text-slate-600 mb-1">Kode Barcode</label>
                         <div class="flex gap-2">
                             <input type="text" id="barang-code" placeholder="Scan / ketik barcode" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <button type="button" onclick="toggleKameraStok()" class="bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1">
+                            <button type="button" onclick="toggleKameraStok()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-1 transition">
                                 <i class="fa-solid fa-barcode"></i>
                                 <span id="text-btn-kamera-stok">Scan</span>
                             </button>
@@ -282,6 +282,15 @@
                     </div>
                 </div>
 
+                <!-- REKAP PENJUALAN PER ITEM / PRODUK -->
+                <div class="pt-2 border-t border-slate-100">
+                    <h3 class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-basket-shopping text-indigo-600"></i> Rekap Penjualan Per Item
+                    </h3>
+                    <div id="list-sales-items" class="space-y-1.5 max-h-48 overflow-y-auto text-xs pr-1"></div>
+                </div>
+
+                <!-- REKAP PENJUALAN PER HARI -->
                 <div class="pt-2 border-t border-slate-100">
                     <h3 class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
                         <i class="fa-solid fa-calendar-days text-indigo-600"></i> Rekap Sales Per Hari
@@ -289,6 +298,7 @@
                     <div id="list-sales-daily" class="space-y-1.5 max-h-40 overflow-y-auto text-xs pr-1"></div>
                 </div>
 
+                <!-- RIWAYAT STRUK TRANSAKSI -->
                 <div class="pt-2 border-t border-slate-100">
                     <h3 class="text-xs font-bold text-slate-700 mb-2">Riwayat Struk Transaksi</h3>
                     <div id="list-laporan" class="divide-y divide-slate-100 max-h-80 overflow-y-auto pr-1"></div>
@@ -357,7 +367,7 @@
         }
 
         function formatRupiah(angka) {
-            return 'Rp ' + Number(angka).toLocaleString('id-ID');
+            return 'Rp ' + Number(angka || 0).toLocaleString('id-ID');
         }
 
         function gantiTab(tabName) {
@@ -409,7 +419,7 @@
                 try {
                     await html5QrCodeKasir.start({ facingMode: "environment" }, config, onScanSuccessKasir);
                 } catch (err) {
-                    alert("Gagal membuka kamera: " + err);
+                    alert("Akses kamera tidak diizinkan atau tidak tersedia.");
                     matikanSemuaKamera();
                 }
             } else {
@@ -451,7 +461,7 @@
                 try {
                     await html5QrCodeStok.start({ facingMode: "environment" }, config, onScanSuccessStok);
                 } catch (err) {
-                    alert("Gagal membuka kamera: " + err);
+                    alert("Akses kamera tidak diizinkan atau tidak tersedia.");
                     matikanSemuaKamera();
                 }
             } else {
@@ -547,10 +557,9 @@
         function hitungDetailItem(item) {
             const hargaEceranNormal = item.price * item.qty;
             
-            // Cek jika item punya aturan promo paket
             if (item.minQty > 0 && item.hargaPaket > 0 && item.qty >= item.minQty) {
-                const jumlahPaket = Math.floor(item.qty / item.minQty); // Berapa kelipatan paket
-                const sisaEceran = item.qty % item.minQty;              // Sisa barang di luar kelipatan paket
+                const jumlahPaket = Math.floor(item.qty / item.minQty);
+                const sisaEceran = item.qty % item.minQty;
 
                 const totalHargaItem = (jumlahPaket * item.hargaPaket) + (sisaEceran * item.price);
                 const potonganHarga = hargaEceranNormal - totalHargaItem;
@@ -929,8 +938,11 @@
         function muatLaporan() {
             const list = document.getElementById('list-laporan');
             const listSalesDaily = document.getElementById('list-sales-daily');
+            const listSalesItems = document.getElementById('list-sales-items');
+            
             list.innerHTML = '';
             listSalesDaily.innerHTML = '';
+            listSalesItems.innerHTML = '';
 
             let omset = 0;
             document.getElementById('stat-total-tx').innerText = laporanList.length;
@@ -938,6 +950,7 @@
             if (laporanList.length === 0) {
                 list.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">Belum ada riwayat transaksi</p>`;
                 listSalesDaily.innerHTML = `<p class="text-center text-xs text-slate-400 py-2">Belum ada data penjualan</p>`;
+                listSalesItems.innerHTML = `<p class="text-center text-xs text-slate-400 py-2">Belum ada item terjual</p>`;
                 document.getElementById('stat-total-omset').innerText = formatRupiah(0);
                 document.getElementById('stat-sales-today').innerText = formatRupiah(0);
                 document.getElementById('stat-avg-monthly').innerText = formatRupiah(0);
@@ -948,6 +961,7 @@
             let salesToday = 0;
             const dailySalesMap = {};
             const monthlySalesMap = {};
+            const itemSalesMap = {}; // Menampung akumulasi penjualan per nama item
 
             laporanList.forEach(tx => {
                 omset += tx.total;
@@ -963,6 +977,17 @@
                 dailySalesMap[dateKey] = (dailySalesMap[dateKey] || 0) + tx.total;
                 monthlySalesMap[monthKey] = (monthlySalesMap[monthKey] || 0) + tx.total;
 
+                // Hitung Penjualan per Item
+                tx.items.forEach(item => {
+                    const detail = hitungDetailItem(item);
+                    if (!itemSalesMap[item.name]) {
+                        itemSalesMap[item.name] = { qty: 0, totalOmset: 0 };
+                    }
+                    itemSalesMap[item.name].qty += item.qty;
+                    itemSalesMap[item.name].totalOmset += detail.hargaAkhir;
+                });
+
+                // Render Riwayat Struk
                 const div = document.createElement('div');
                 div.className = "py-3 space-y-1 text-xs border-b border-slate-100";
                 
@@ -991,6 +1016,7 @@
                 list.appendChild(div);
             });
 
+            // Set Ringkasan Statistik
             document.getElementById('stat-total-omset').innerText = formatRupiah(omset);
             document.getElementById('stat-sales-today').innerText = formatRupiah(salesToday);
 
@@ -998,6 +1024,22 @@
             const avgMonthly = omset / totalMonths;
             document.getElementById('stat-avg-monthly').innerText = formatRupiah(Math.round(avgMonthly));
 
+            // Render Laporan Sales Per Item (Diurutkan dari Qty terbanyak)
+            const sortedItems = Object.keys(itemSalesMap).sort((a, b) => itemSalesMap[b].qty - itemSalesMap[a].qty);
+            sortedItems.forEach(itemName => {
+                const data = itemSalesMap[itemName];
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center py-1.5 px-2 bg-slate-50 rounded border border-slate-200 text-xs";
+                row.innerHTML = `
+                    <div class="font-medium text-slate-700 truncate max-w-[180px] sm:max-w-[260px]">
+                        ${itemName} <span class="text-slate-500 font-semibold text-[11px] ml-1">(${data.qty} pcs)</span>
+                    </div>
+                    <span class="font-bold text-emerald-600">${formatRupiah(data.totalOmset)}</span>
+                `;
+                listSalesItems.appendChild(row);
+            });
+
+            // Render Laporan Sales Per Hari
             const sortedDailyKeys = Object.keys(dailySalesMap).sort().reverse();
             sortedDailyKeys.forEach(dateStr => {
                 const parts = dateStr.split('-');
