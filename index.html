@@ -6,24 +6,18 @@
     <title>Warung Zahra - Kasir & Stok</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome CDN untuk Icon -->
+    <!-- FontAwesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- HTML5-QRCode Scanner Library CDN -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
-        /* Sembunyikan elemen aplikasi saat cetak, dan tampilkan KHUSUS struk */
         @media print {
-            body {
-                background: white !important;
-                color: black !important;
-            }
-            .no-print, header, nav, main, #modal-struk { 
-                display: none !important; 
-            }
+            body { background: white !important; color: black !important; }
+            .no-print, header, nav, main, #modal-struk { display: none !important; }
             #area-struk-print { 
                 display: block !important;
                 width: 100% !important;
-                max-width: 58mm; /* Ukuran standar kertas nota thermal */
+                max-width: 58mm;
                 margin: 0 auto;
                 padding: 0;
                 font-family: 'Courier New', Courier, monospace;
@@ -68,8 +62,6 @@
 
         <!-- ==================== TAB 1: KASIR ==================== -->
         <section id="tab-kasir" class="block space-y-4">
-            
-            <!-- Notifikasi Scan -->
             <div id="notif-scan-kasir" class="hidden text-center text-xs font-bold p-2 rounded shadow transition"></div>
 
             <!-- Kamera & Pencarian -->
@@ -85,7 +77,6 @@
                     </button>
                 </div>
 
-                <!-- Video Stream Scanner -->
                 <div id="wrapper-kamera-kasir" class="hidden overflow-hidden rounded-lg border-2 border-indigo-500 bg-black">
                     <div id="reader-kasir" class="w-full"></div>
                 </div>
@@ -111,15 +102,25 @@
                     <button onclick="kosongkanKeranjang()" class="text-xs text-red-500 hover:underline">Kosongkan</button>
                 </div>
 
-                <div id="list-keranjang" class="divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                <div id="list-keranjang" class="divide-y divide-slate-100 max-h-56 overflow-y-auto">
                     <!-- Item keranjang disuntik via JS -->
                 </div>
 
                 <!-- Summary & Pembayaran Tunai -->
-                <div class="pt-3 border-t border-slate-200 space-y-3">
-                    <div class="flex justify-between items-center text-slate-700 text-sm">
-                        <span class="font-medium">Total Harga</span>
-                        <span id="total-harga" class="font-bold text-indigo-600 text-xl">Rp 0</span>
+                <div class="pt-2 border-t border-slate-200 space-y-3">
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-slate-500 text-xs">
+                            <span>Subtotal Normal</span>
+                            <span id="subtotal-harga" class="font-semibold">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between items-center text-emerald-600 text-xs">
+                            <span class="flex items-center gap-1"><i class="fa-solid fa-tags"></i> Total Potongan Paket</span>
+                            <span id="text-potongan-diskon" class="font-semibold">- Rp 0</span>
+                        </div>
+                        <div class="flex justify-between items-center text-slate-800 text-sm pt-1 border-t">
+                            <span class="font-bold">Total Bayar</span>
+                            <span id="total-harga" class="font-bold text-indigo-600 text-xl">Rp 0</span>
+                        </div>
                     </div>
 
                     <!-- Input Uang Tunai & Kembalian -->
@@ -147,8 +148,6 @@
 
         <!-- ==================== TAB 2: KELOLA STOK ==================== -->
         <section id="tab-stok" class="hidden space-y-4">
-            
-            <!-- Notifikasi Scan Stok -->
             <div id="notif-scan-stok" class="hidden text-center text-xs font-bold p-2 rounded shadow transition"></div>
 
             <!-- Form Tambah/Edit Barang -->
@@ -171,25 +170,42 @@
                         </div>
                     </div>
 
-                    <!-- Kamera Stok -->
                     <div id="wrapper-kamera-stok" class="hidden overflow-hidden rounded-lg border-2 border-indigo-500 bg-black">
                         <div id="reader-stok" class="w-full"></div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Nama Barang *</label>
-                        <input type="text" id="barang-nama" required placeholder="Contoh: Minyak Goreng 1L" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="text" id="barang-nama" required placeholder="Contoh: Indomie Goreng" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Harga (Rp) *</label>
-                            <input type="number" id="barang-harga" required min="0" placeholder="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Harga Eceran Normal / pcs (Rp) *</label>
+                            <input type="number" id="barang-harga" required min="0" placeholder="Contoh: 3500" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Stok *</label>
                             <input type="number" id="barang-stok" required min="0" placeholder="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
+                    </div>
+
+                    <!-- ATURAN PAKET KELIPATAN PROMO -->
+                    <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 space-y-2">
+                        <div class="text-xs font-bold text-amber-800 flex items-center gap-1">
+                            <i class="fa-solid fa-bolt"></i> Aturan Promo Kelipatan Paket
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] text-amber-900 font-medium mb-0.5">Kelipatan Qty Paket</label>
+                                <input type="number" id="barang-min-qty" min="0" placeholder="Contoh: 3" class="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded text-xs focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-amber-900 font-medium mb-0.5">Harga Paket (Rp)</label>
+                                <input type="number" id="barang-harga-paket" min="0" placeholder="Contoh: 10000" class="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded text-xs focus:outline-none">
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-amber-700 leading-tight">Contoh: Beli <b>3</b> pcs seharga <b>Rp 10.000</b>. Jika beli 7 pcs, terhitung 2 paket (6 pcs = 20rb) + 1 pcs eceran (3.5rb) = Rp 23.500.</p>
                     </div>
 
                     <div class="flex gap-2 pt-1">
@@ -215,7 +231,8 @@
                         <thead class="bg-slate-100 text-slate-700 uppercase font-semibold">
                             <tr>
                                 <th class="p-2.5">Barang</th>
-                                <th class="p-2.5">Harga</th>
+                                <th class="p-2.5">Harga Eceran</th>
+                                <th class="p-2.5">Promo Kelipatan</th>
                                 <th class="p-2.5 text-center">Stok</th>
                                 <th class="p-2.5 text-center">Aksi</th>
                             </tr>
@@ -230,10 +247,10 @@
 
         <!-- ==================== TAB 3: LAPORAN ==================== -->
         <section id="tab-laporan" class="hidden space-y-4">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
                 <div class="flex justify-between items-center border-b pb-2">
-                    <h2 class="font-bold text-slate-800 text-sm">Riwayat Penjualan</h2>
-                    <button onclick="hapusSemuaLaporan()" class="text-xs text-red-500 hover:underline">Hapus Riwayat</button>
+                    <h2 class="font-bold text-slate-800 text-sm">Laporan Penjualan</h2>
+                    <button onclick="hapusSemuaLaporan()" class="text-xs text-red-500 hover:underline">Hapus Semua Riwayat</button>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 text-center">
@@ -242,20 +259,46 @@
                         <div id="stat-total-tx" class="text-lg font-bold text-indigo-900">0</div>
                     </div>
                     <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                        <div class="text-xs text-emerald-600 font-medium">Pendapatan</div>
+                        <div class="text-xs text-emerald-600 font-medium">Total Pendapatan</div>
                         <div id="stat-total-omset" class="text-lg font-bold text-emerald-900">Rp 0</div>
                     </div>
                 </div>
 
-                <div id="list-laporan" class="divide-y divide-slate-100 max-h-96 overflow-y-auto pt-2">
-                    <!-- Item laporan disuntik via JS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-center">
+                    <div class="bg-amber-50 p-3 rounded-lg border border-amber-100 flex justify-between items-center px-4">
+                        <div class="text-left">
+                            <div class="text-xs text-amber-700 font-medium">Sales Hari Ini</div>
+                            <div id="stat-sales-today" class="text-base font-bold text-amber-900">Rp 0</div>
+                        </div>
+                        <i class="fa-solid fa-calendar-day text-amber-400 text-2xl"></i>
+                    </div>
+
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 flex justify-between items-center px-4">
+                        <div class="text-left">
+                            <div class="text-xs text-blue-700 font-medium">Rata-Rata Penjualan / Bulan</div>
+                            <div id="stat-avg-monthly" class="text-base font-bold text-blue-900">Rp 0</div>
+                        </div>
+                        <i class="fa-solid fa-chart-simple text-blue-400 text-2xl"></i>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100">
+                    <h3 class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-days text-indigo-600"></i> Rekap Sales Per Hari
+                    </h3>
+                    <div id="list-sales-daily" class="space-y-1.5 max-h-40 overflow-y-auto text-xs pr-1"></div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100">
+                    <h3 class="text-xs font-bold text-slate-700 mb-2">Riwayat Struk Transaksi</h3>
+                    <div id="list-laporan" class="divide-y divide-slate-100 max-h-80 overflow-y-auto pr-1"></div>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- ==================== MODAL STRUK (LAYAR HP/LAPTOP) ==================== -->
+    <!-- ==================== MODAL STRUK ==================== -->
     <div id="modal-struk" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 no-print">
         <div class="bg-white w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-2xl">
             <div class="text-center">
@@ -266,10 +309,7 @@
                 <p class="text-xs text-slate-500">Preview struk pembayaran di bawah ini:</p>
             </div>
 
-            <!-- Preview Struk Visual di Layar -->
-            <div id="preview-struk-modal" class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs font-mono text-slate-800 max-h-60 overflow-y-auto space-y-1">
-                <!-- Disuntik via JS -->
-            </div>
+            <div id="preview-struk-modal" class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs font-mono text-slate-800 max-h-60 overflow-y-auto space-y-1"></div>
 
             <div class="flex gap-2 pt-2">
                 <button onclick="cetakStruk()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
@@ -282,29 +322,25 @@
         </div>
     </div>
 
-    <!-- AREA STRUK KHUSUS PRINT (DITAMPILKAN KETIKA DITETAK KE PRINTER) -->
-    <div id="area-struk-print" class="hidden">
-        <!-- Disuntik via JS -->
-    </div>
+    <!-- AREA STRUK PRINT -->
+    <div id="area-struk-print" class="hidden"></div>
 
     <!-- ==================== JAVASCRIPT ==================== -->
     <script>
-        // --- DATA STATE (LOCAL STORAGE) ---
+        // --- DATA STATE LOCAL STORAGE ---
         let produkList = JSON.parse(localStorage.getItem('wz_produk')) || [
-            { id: 1, code: "8999999001", name: "Aqua 600ml", price: 3500, stock: 24 },
-            { id: 2, code: "8999999002", name: "Indomie Goreng", price: 3000, stock: 40 },
-            { id: 3, code: "8999999003", name: "Kopi Kapal Api", price: 2000, stock: 30 }
+            { id: 1, code: "8999999001", name: "Aqua 600ml", price: 3500, stock: 24, minQty: 6, hargaPaket: 18000 },
+            { id: 2, code: "8999999002", name: "Indomie Goreng", price: 3500, stock: 50, minQty: 3, hargaPaket: 10000 },
+            { id: 3, code: "8999999003", name: "Kopi Kapal Api", price: 2000, stock: 30, minQty: 0, hargaPaket: 0 }
         ];
 
         let keranjang = [];
         let laporanList = JSON.parse(localStorage.getItem('wz_laporan')) || [];
 
-        // Variable Instance Scanner
         let html5QrCodeKasir = null;
         let html5QrCodeStok = null;
         let isProcessingScanKasir = false;
 
-        // --- DEFAULTS & INIT ---
         document.addEventListener('DOMContentLoaded', () => {
             simpanLocalProduk();
             muatProdukKasir();
@@ -324,7 +360,6 @@
             return 'Rp ' + Number(angka).toLocaleString('id-ID');
         }
 
-        // --- FUNGSI TAB NAVIGASI ---
         function gantiTab(tabName) {
             matikanSemuaKamera();
             
@@ -341,7 +376,6 @@
             if (tabName === 'laporan') muatLaporan();
         }
 
-        // --- OPTIMASI KAMERA SCANNER ---
         function matikanSemuaKamera() {
             if (html5QrCodeKasir) {
                 html5QrCodeKasir.stop().then(() => {
@@ -364,22 +398,13 @@
 
         async function toggleKameraKasir() {
             const wrapper = document.getElementById('wrapper-kamera-kasir');
-            
             if (wrapper.classList.contains('hidden')) {
                 matikanSemuaKamera();
                 wrapper.classList.remove('hidden');
                 document.getElementById('text-btn-kamera-kasir').innerText = "Tutup Kamera";
 
                 html5QrCodeKasir = new Html5Qrcode("reader-kasir");
-                const config = { 
-                    fps: 10, 
-                    qrbox: { width: 250, height: 150 },
-                    videoConstraints: {
-                        facingMode: "environment",
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    }
-                };
+                const config = { fps: 10, qrbox: { width: 250, height: 150 } };
 
                 try {
                     await html5QrCodeKasir.start({ facingMode: "environment" }, config, onScanSuccessKasir);
@@ -415,22 +440,13 @@
 
         async function toggleKameraStok() {
             const wrapper = document.getElementById('wrapper-kamera-stok');
-            
             if (wrapper.classList.contains('hidden')) {
                 matikanSemuaKamera();
                 wrapper.classList.remove('hidden');
                 document.getElementById('text-btn-kamera-stok').innerText = "Tutup";
 
                 html5QrCodeStok = new Html5Qrcode("reader-stok");
-                const config = { 
-                    fps: 10, 
-                    qrbox: { width: 200, height: 120 },
-                    videoConstraints: {
-                        facingMode: "environment",
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    }
-                };
+                const config = { fps: 10, qrbox: { width: 200, height: 120 } };
 
                 try {
                     await html5QrCodeStok.start({ facingMode: "environment" }, config, onScanSuccessStok);
@@ -455,7 +471,7 @@
             }, 800);
         }
 
-        // --- FUNGSI TAB KASIR ---
+        // --- KASIR & KERANJANG ---
         function muatProdukKasir() {
             const query = document.getElementById('search-kasir').value.toLowerCase();
             const grid = document.getElementById('grid-produk-kasir');
@@ -473,12 +489,15 @@
             }
 
             filtered.forEach(p => {
+                const hasPromo = p.minQty > 0 && p.hargaPaket > 0;
                 const card = document.createElement('div');
                 card.onclick = () => tambahKeKeranjang(p.id);
-                card.className = `p-3 rounded-lg border text-left cursor-pointer transition hover:shadow-md ${p.stock > 0 ? 'bg-slate-50 border-slate-200 hover:border-indigo-400' : 'bg-red-50 border-red-100 opacity-60'}`;
+                card.className = `p-3 rounded-lg border text-left cursor-pointer transition hover:shadow-md relative ${p.stock > 0 ? 'bg-slate-50 border-slate-200 hover:border-indigo-400' : 'bg-red-50 border-red-100 opacity-60'}`;
+                
                 card.innerHTML = `
-                    <div class="font-bold text-xs text-slate-800 truncate">${p.name}</div>
-                    <div class="text-xs text-indigo-600 font-semibold mt-1">${formatRupiah(p.price)}</div>
+                    ${hasPromo ? `<span class="absolute top-1 right-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">${p.minQty} Pcs ${formatRupiah(p.hargaPaket)}</span>` : ''}
+                    <div class="font-bold text-xs text-slate-800 truncate pr-10">${p.name}</div>
+                    <div class="text-xs text-indigo-600 font-semibold mt-1">${formatRupiah(p.price)} / pcs</div>
                     <div class="text-[10px] ${p.stock > 0 ? 'text-slate-500' : 'text-red-600 font-bold'} mt-0.5">Stok: ${p.stock}</div>
                 `;
                 grid.appendChild(card);
@@ -502,7 +521,14 @@
                 }
                 itemInCart.qty += 1;
             } else {
-                keranjang.push({ id: produk.id, name: produk.name, price: produk.price, qty: 1 });
+                keranjang.push({ 
+                    id: produk.id, 
+                    name: produk.name, 
+                    price: produk.price, 
+                    minQty: produk.minQty || 0,
+                    hargaPaket: produk.hargaPaket || 0,
+                    qty: 1 
+                });
             }
 
             muatKeranjang();
@@ -517,22 +543,50 @@
             return false;
         }
 
+        // LOGIKA PERHITUNGAN PROMO KELIPATAN PAKET
+        function hitungDetailItem(item) {
+            const hargaEceranNormal = item.price * item.qty;
+            
+            // Cek jika item punya aturan promo paket
+            if (item.minQty > 0 && item.hargaPaket > 0 && item.qty >= item.minQty) {
+                const jumlahPaket = Math.floor(item.qty / item.minQty); // Berapa kelipatan paket
+                const sisaEceran = item.qty % item.minQty;              // Sisa barang di luar kelipatan paket
+
+                const totalHargaItem = (jumlahPaket * item.hargaPaket) + (sisaEceran * item.price);
+                const potonganHarga = hargaEceranNormal - totalHargaItem;
+
+                return {
+                    isPromoActive: true,
+                    jumlahPaket: jumlahPaket,
+                    sisaEceran: sisaEceran,
+                    hargaNormal: hargaEceranNormal,
+                    hargaAkhir: totalHargaItem,
+                    potongan: potonganHarga
+                };
+            }
+
+            return {
+                isPromoActive: false,
+                jumlahPaket: 0,
+                sisaEceran: item.qty,
+                hargaNormal: hargaEceranNormal,
+                hargaAkhir: hargaEceranNormal,
+                potongan: 0
+            };
+        }
+
         function muatKeranjang() {
             const list = document.getElementById('list-keranjang');
             list.innerHTML = '';
-            let total = 0;
 
             if (keranjang.length === 0) {
                 list.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">Keranjang masih kosong</p>`;
-                document.getElementById('total-harga').innerText = formatRupiah(0);
-                document.getElementById('input-tunai').value = '';
-                hitungKembalian();
+                hitungTotalAkhir();
                 return;
             }
 
             keranjang.forEach(item => {
-                const subtotal = item.price * item.qty;
-                total += subtotal;
+                const detail = hitungDetailItem(item);
 
                 const row = document.createElement('div');
                 row.className = "py-2 flex justify-between items-center text-xs";
@@ -540,9 +594,13 @@
                     <div class="flex-1 pr-2">
                         <div class="font-bold text-slate-800">${item.name}</div>
                         <div class="text-slate-500">${formatRupiah(item.price)} x ${item.qty}</div>
+                        ${detail.isPromoActive ? `<div class="text-[10px] text-emerald-600 font-semibold"><i class="fa-solid fa-tag"></i> Promo ${detail.jumlahPaket} Paket (${item.minQty}pcs @${formatRupiah(item.hargaPaket)})${detail.sisaEceran > 0 ? ` + ${detail.sisaEceran} eceran` : ''}</div>` : ''}
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="font-bold text-slate-700">${formatRupiah(subtotal)}</span>
+                        <div class="text-right">
+                            <span class="font-bold text-slate-700 block">${formatRupiah(detail.hargaAkhir)}</span>
+                            ${detail.isPromoActive ? `<span class="text-[10px] text-emerald-600 line-through block">${formatRupiah(detail.hargaNormal)}</span>` : ''}
+                        </div>
                         <div class="flex items-center border border-slate-300 rounded overflow-hidden">
                             <button onclick="ubahQty(${item.id}, -1)" class="px-2 py-0.5 bg-slate-100 text-slate-600 hover:bg-slate-200">-</button>
                             <span class="px-2 font-semibold text-slate-700">${item.qty}</span>
@@ -553,16 +611,47 @@
                 list.appendChild(row);
             });
 
-            document.getElementById('total-harga').innerText = formatRupiah(total);
+            hitungTotalAkhir();
+        }
+
+        function hitungTotalAkhir() {
+            let subtotalNormal = 0;
+            let totalPotonganDiskon = 0;
+
+            keranjang.forEach(item => {
+                const detail = hitungDetailItem(item);
+                subtotalNormal += detail.hargaNormal;
+                totalPotonganDiskon += detail.potongan;
+            });
+
+            const totalFinal = subtotalNormal - totalPotonganDiskon;
+
+            document.getElementById('subtotal-harga').innerText = formatRupiah(subtotalNormal);
+            document.getElementById('text-potongan-diskon').innerText = `- ${formatRupiah(totalPotonganDiskon)}`;
+            document.getElementById('total-harga').innerText = formatRupiah(totalFinal);
+
             hitungKembalian();
         }
 
-        function getTotalHarga() {
-            return keranjang.reduce((total, item) => total + (item.price * item.qty), 0);
+        function getTotalHargaFinal() {
+            let subtotalNormal = 0;
+            let totalPotongan = 0;
+
+            keranjang.forEach(item => {
+                const detail = hitungDetailItem(item);
+                subtotalNormal += detail.hargaNormal;
+                totalPotongan += detail.potongan;
+            });
+
+            return {
+                subtotal: subtotalNormal,
+                diskon: totalPotongan,
+                totalFinal: subtotalNormal - totalPotongan
+            };
         }
 
         function hitungKembalian() {
-            const total = getTotalHarga();
+            const calc = getTotalHargaFinal();
             const tunai = Number(document.getElementById('input-tunai').value) || 0;
             const elemKembalian = document.getElementById('text-kembalian');
 
@@ -572,7 +661,7 @@
                 return;
             }
 
-            const kembalian = tunai - total;
+            const kembalian = tunai - calc.totalFinal;
             if (kembalian >= 0) {
                 elemKembalian.innerText = formatRupiah(kembalian);
                 elemKembalian.className = "font-bold text-emerald-600";
@@ -583,8 +672,8 @@
         }
 
         function setUangPas() {
-            const total = getTotalHarga();
-            document.getElementById('input-tunai').value = total > 0 ? total : '';
+            const calc = getTotalHargaFinal();
+            document.getElementById('input-tunai').value = calc.totalFinal > 0 ? calc.totalFinal : '';
             hitungKembalian();
         }
 
@@ -617,15 +706,15 @@
                 return;
             }
 
-            const totalTx = getTotalHarga();
+            const calc = getTotalHargaFinal();
             const tunai = Number(document.getElementById('input-tunai').value) || 0;
 
-            if (tunai < totalTx) {
-                alert(`Uang tunai kurang! Kurang ${formatRupiah(totalTx - tunai)}`);
+            if (tunai < calc.totalFinal) {
+                alert(`Uang tunai kurang! Kurang ${formatRupiah(calc.totalFinal - tunai)}`);
                 return;
             }
 
-            const kembalian = tunai - totalTx;
+            const kembalian = tunai - calc.totalFinal;
 
             keranjang.forEach(item => {
                 const produk = produkList.find(p => Number(p.id) === Number(item.id));
@@ -634,11 +723,15 @@
                 }
             });
 
+            const sekarang = new Date();
             const transaksiBaru = {
                 id: Date.now(),
-                waktu: new Date().toLocaleString('id-ID'),
-                items: [...keranjang],
-                total: totalTx,
+                waktu: sekarang.toLocaleString('id-ID'),
+                timestamp: sekarang.toISOString(),
+                items: JSON.parse(JSON.stringify(keranjang)),
+                subtotal: calc.subtotal,
+                diskon: calc.diskon,
+                total: calc.totalFinal,
                 tunai: tunai,
                 kembalian: kembalian
             };
@@ -648,24 +741,29 @@
             simpanLocalProduk();
             simpanLocalLaporan();
 
-            // Tampilkan Modal Struk & Siapkan Layout Cetak
             bukaModalStruk(transaksiBaru);
-
             kosongkanKeranjang();
             muatProdukKasir();
         }
 
-        // --- FUNGSI CETAK STRUK PERBAIKAN ---
-        function bukaModalStruk(tx) {
+        // --- STRUK & PRINT ---
+        function bukaModalStrukByTx(tx) {
             const previewModal = document.getElementById('preview-struk-modal');
             const areaPrint = document.getElementById('area-struk-print');
 
-            let itemRows = tx.items.map(i => `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                    <span>${i.name} (${i.qty}x)</span>
-                    <span>${formatRupiah(i.price * i.qty)}</span>
-                </div>
-            `).join('');
+            let itemRows = tx.items.map(i => {
+                const detail = hitungDetailItem(i);
+
+                return `
+                    <div style="margin-bottom: 4px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>${i.name} (${i.qty}x)</span>
+                            <span>${formatRupiah(detail.hargaAkhir)}</span>
+                        </div>
+                        ${detail.isPromoActive ? `<div style="font-size: 9px; color: #555;">(Promo ${detail.jumlahPaket} Pkt @${formatRupiah(i.hargaPaket)}${detail.sisaEceran > 0 ? ` +${detail.sisaEceran} ecer` : ''})</div>` : ''}
+                    </div>
+                `;
+            }).join('');
 
             let htmlStruk = `
                 <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
@@ -676,6 +774,16 @@
                 <div style="font-size: 10px; margin-bottom: 6px;">Tgl: ${tx.waktu}</div>
                 <div>${itemRows}</div>
                 <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                ${tx.diskon > 0 ? `
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Subtotal</span>
+                    <span>${formatRupiah(tx.subtotal)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Potongan Paket</span>
+                    <span>-${formatRupiah(tx.diskon)}</span>
+                </div>
+                ` : ''}
                 <div style="display: flex; justify-content: space-between; font-weight: bold;">
                     <span>TOTAL</span>
                     <span>${formatRupiah(tx.total)}</span>
@@ -699,6 +807,15 @@
             document.getElementById('modal-struk').classList.remove('hidden');
         }
 
+        function bukaModalStruk(tx) {
+            bukaModalStrukByTx(tx);
+        }
+
+        function cetakStrukUlang(txId) {
+            const tx = laporanList.find(t => Number(t.id) === Number(txId));
+            if (tx) bukaModalStrukByTx(tx);
+        }
+
         function cetakStruk() {
             window.print();
         }
@@ -707,7 +824,7 @@
             document.getElementById('modal-struk').classList.add('hidden');
         }
 
-        // --- FUNGSI TAB STOK ---
+        // --- STOK BARANG ---
         function muatTabelStok() {
             const query = document.getElementById('search-stok').value.toLowerCase();
             const body = document.getElementById('tabel-stok-body');
@@ -718,11 +835,12 @@
             );
 
             if (filtered.length === 0) {
-                body.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-400">Belum ada barang</td></tr>`;
+                body.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-400">Belum ada barang</td></tr>`;
                 return;
             }
 
             filtered.forEach(p => {
+                const hasPromo = p.minQty > 0 && p.hargaPaket > 0;
                 const tr = document.createElement('tr');
                 tr.className = "border-b border-slate-50 hover:bg-slate-50";
                 tr.innerHTML = `
@@ -731,6 +849,9 @@
                         <div class="text-[10px] text-slate-400">${p.code || 'Tanpa Barcode'}</div>
                     </td>
                     <td class="p-2.5 font-medium">${formatRupiah(p.price)}</td>
+                    <td class="p-2.5">
+                        ${hasPromo ? `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-semibold">${p.minQty} Pcs = ${formatRupiah(p.hargaPaket)}</span>` : '<span class="text-slate-400 text-[10px]">-</span>'}
+                    </td>
                     <td class="p-2.5 text-center font-bold ${p.stock <= 5 ? 'text-red-500' : 'text-slate-700'}">${p.stock}</td>
                     <td class="p-2.5 text-center">
                         <button onclick="editBarang(${p.id})" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fa-solid fa-pen"></i></button>
@@ -748,6 +869,8 @@
             const name = document.getElementById('barang-nama').value.trim();
             const price = Number(document.getElementById('barang-harga').value);
             const stock = Number(document.getElementById('barang-stok').value);
+            const minQty = Number(document.getElementById('barang-min-qty').value) || 0;
+            const hargaPaket = Number(document.getElementById('barang-harga-paket').value) || 0;
 
             if (id) {
                 const produk = produkList.find(p => Number(p.id) === Number(id));
@@ -756,9 +879,11 @@
                     produk.name = name;
                     produk.price = price;
                     produk.stock = stock;
+                    produk.minQty = minQty;
+                    produk.hargaPaket = hargaPaket;
                 }
             } else {
-                const newBarang = { id: Date.now(), code, name, price, stock };
+                const newBarang = { id: Date.now(), code, name, price, stock, minQty, hargaPaket };
                 produkList.unshift(newBarang);
             }
 
@@ -777,6 +902,8 @@
             document.getElementById('barang-nama').value = p.name;
             document.getElementById('barang-harga').value = p.price;
             document.getElementById('barang-stok').value = p.stock;
+            document.getElementById('barang-min-qty').value = p.minQty || '';
+            document.getElementById('barang-harga-paket').value = p.hargaPaket || '';
             
             document.getElementById('form-stok-title').innerHTML = `<i class="fa-solid fa-pen text-indigo-600"></i> Edit Barang`;
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -798,22 +925,44 @@
             matikanSemuaKamera();
         }
 
-        // --- FUNGSI TAB LAPORAN ---
+        // --- LAPORAN ---
         function muatLaporan() {
             const list = document.getElementById('list-laporan');
+            const listSalesDaily = document.getElementById('list-sales-daily');
             list.innerHTML = '';
+            listSalesDaily.innerHTML = '';
 
             let omset = 0;
             document.getElementById('stat-total-tx').innerText = laporanList.length;
 
             if (laporanList.length === 0) {
                 list.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">Belum ada riwayat transaksi</p>`;
+                listSalesDaily.innerHTML = `<p class="text-center text-xs text-slate-400 py-2">Belum ada data penjualan</p>`;
                 document.getElementById('stat-total-omset').innerText = formatRupiah(0);
+                document.getElementById('stat-sales-today').innerText = formatRupiah(0);
+                document.getElementById('stat-avg-monthly').innerText = formatRupiah(0);
                 return;
             }
 
+            const todayKey = new Date().toISOString().split('T')[0];
+            let salesToday = 0;
+            const dailySalesMap = {};
+            const monthlySalesMap = {};
+
             laporanList.forEach(tx => {
                 omset += tx.total;
+
+                let dateObj = tx.timestamp ? new Date(tx.timestamp) : new Date(tx.id);
+                if (isNaN(dateObj.getTime())) dateObj = new Date();
+
+                const dateKey = dateObj.toISOString().split('T')[0];
+                const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+
+                if (dateKey === todayKey) salesToday += tx.total;
+
+                dailySalesMap[dateKey] = (dailySalesMap[dateKey] || 0) + tx.total;
+                monthlySalesMap[monthKey] = (monthlySalesMap[monthKey] || 0) + tx.total;
+
                 const div = document.createElement('div');
                 div.className = "py-3 space-y-1 text-xs border-b border-slate-100";
                 
@@ -826,20 +975,54 @@
                     </div>
                     <div class="text-slate-500 text-[11px] truncate">${itemStr}</div>
                     <div class="flex justify-between items-center pt-1">
-                        <span class="text-[10px] text-slate-400">Bayar: ${formatRupiah(tx.tunai)} | Kembali: ${formatRupiah(tx.kembalian)}</span>
-                        <button onclick='bukaModalStruk(${JSON.stringify(tx)})' class="text-[11px] text-indigo-600 hover:underline font-semibold flex items-center gap-1">
-                            <i class="fa-solid fa-print"></i> Struk
-                        </button>
+                        <span class="text-[10px] text-slate-400">
+                            ${tx.diskon ? `Hemat: ${formatRupiah(tx.diskon)} | ` : ''}Bayar: ${formatRupiah(tx.tunai)}
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="cetakStrukUlang(${tx.id})" class="text-[11px] text-indigo-600 hover:underline font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-print"></i> Struk
+                            </button>
+                            <button onclick="hapusStruk(${tx.id})" class="text-[11px] text-red-500 hover:underline font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-trash"></i> Hapus
+                            </button>
+                        </div>
                     </div>
                 `;
                 list.appendChild(div);
             });
 
             document.getElementById('stat-total-omset').innerText = formatRupiah(omset);
+            document.getElementById('stat-sales-today').innerText = formatRupiah(salesToday);
+
+            const totalMonths = Object.keys(monthlySalesMap).length || 1;
+            const avgMonthly = omset / totalMonths;
+            document.getElementById('stat-avg-monthly').innerText = formatRupiah(Math.round(avgMonthly));
+
+            const sortedDailyKeys = Object.keys(dailySalesMap).sort().reverse();
+            sortedDailyKeys.forEach(dateStr => {
+                const parts = dateStr.split('-');
+                const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center py-1.5 px-2 bg-slate-50 rounded border border-slate-200 text-xs";
+                row.innerHTML = `
+                    <span class="font-medium text-slate-700">${formattedDate}</span>
+                    <span class="font-bold text-indigo-600">${formatRupiah(dailySalesMap[dateStr])}</span>
+                `;
+                listSalesDaily.appendChild(row);
+            });
+        }
+
+        function hapusStruk(txId) {
+            if (confirm("Hapus riwayat transaksi ini?")) {
+                laporanList = laporanList.filter(tx => Number(tx.id) !== Number(txId));
+                simpanLocalLaporan();
+                muatLaporan();
+            }
         }
 
         function hapusSemuaLaporan() {
-            if (confirm("Hapus semua riwayat transaksi?")) {
+            if (confirm("Yakin ingin menghapus SELURUH riwayat transaksi?")) {
                 laporanList = [];
                 simpanLocalLaporan();
                 muatLaporan();
