@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warung Zahra - Kasir & Stok</title>
+    <title>Warung Zahra - Kasir & Stok Multi-Device</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- HTML5-QRCode Scanner Library CDN -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Firebase SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
         @media print {
             body { background: white !important; color: black !important; margin: 0; padding: 0; }
@@ -36,8 +40,13 @@
                 <i class="fa-solid fa-store text-xl"></i>
                 <h1 class="font-bold text-lg tracking-wide">Warung Zahra</h1>
             </div>
-            <div class="text-xs bg-indigo-700 px-2.5 py-1 rounded-full font-medium">
-                Kasir & Inventaris
+            <div class="flex items-center gap-2">
+                <span id="status-koneksi" class="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan...
+                </span>
+                <div class="text-xs bg-indigo-700 px-2.5 py-1 rounded-full font-medium hidden sm:block">
+                    Kasir & Inventaris
+                </div>
             </div>
         </div>
     </header>
@@ -123,7 +132,7 @@
                         </div>
                     </div>
 
-                    <!-- Input Uang Tunai & Kembalian -->
+                    <!-- Input Uang Tunai & Quick Cash -->
                     <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
                         <div class="flex justify-between items-center gap-2">
                             <label class="text-xs font-bold text-slate-600">Uang Tunai (Rp):</label>
@@ -133,7 +142,16 @@
                         </div>
                         <input type="number" id="input-tunai" oninput="hitungKembalian()" min="0" placeholder="Masukkan nominal..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         
-                        <div class="flex justify-between items-center pt-1 text-sm">
+                        <!-- QUICK CASH BUTTONS -->
+                        <div class="grid grid-cols-5 gap-1 pt-1">
+                            <button onclick="setQuickCash(5000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">5k</button>
+                            <button onclick="setQuickCash(10000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">10k</button>
+                            <button onclick="setQuickCash(20000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">20k</button>
+                            <button onclick="setQuickCash(50000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">50k</button>
+                            <button onclick="setQuickCash(100000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">100k</button>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-1 text-sm border-t border-slate-200 mt-2">
                             <span class="font-medium text-slate-600">Kembalian:</span>
                             <span id="text-kembalian" class="font-bold text-slate-800">Rp 0</span>
                         </div>
@@ -179,9 +197,13 @@
                         <input type="text" id="barang-nama" required placeholder="Contoh: Indomie Goreng" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-3 gap-2">
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Harga Eceran Normal / pcs (Rp) *</label>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Modal / pcs (Rp) *</label>
+                            <input type="number" id="barang-cost" required min="0" placeholder="Contoh: 3000" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Harga Jual / pcs (Rp) *</label>
                             <input type="number" id="barang-harga" required min="0" placeholder="Contoh: 3500" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
@@ -205,7 +227,6 @@
                                 <input type="number" id="barang-harga-paket" min="0" placeholder="Contoh: 10000" class="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded text-xs focus:outline-none">
                             </div>
                         </div>
-                        <p class="text-[10px] text-amber-700 leading-tight">Contoh: Beli <b>3</b> pcs seharga <b>Rp 10.000</b>. Jika beli 7 pcs, terhitung 2 paket (6 pcs = 20rb) + 1 pcs eceran (3.5rb) = Rp 23.500.</p>
                     </div>
 
                     <div class="flex gap-2 pt-1">
@@ -231,8 +252,9 @@
                         <thead class="bg-slate-100 text-slate-700 uppercase font-semibold">
                             <tr>
                                 <th class="p-2.5">Barang</th>
-                                <th class="p-2.5">Harga Eceran</th>
-                                <th class="p-2.5">Promo Kelipatan</th>
+                                <th class="p-2.5">Modal</th>
+                                <th class="p-2.5">Harga Jual</th>
+                                <th class="p-2.5">Margin Normal</th>
                                 <th class="p-2.5 text-center">Stok</th>
                                 <th class="p-2.5 text-center">Aksi</th>
                             </tr>
@@ -248,7 +270,7 @@
         <!-- ==================== TAB 3: LAPORAN ==================== -->
         <section id="tab-laporan" class="hidden space-y-4">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                <div class="flex justify-between items-center border-b pb-2">
+                <div class="flex flex-wrap justify-between items-center border-b pb-2 gap-2">
                     <h2 class="font-bold text-slate-800 text-sm">Laporan Penjualan</h2>
                     <div class="flex gap-2">
                         <button onclick="exportLaporanCSV()" class="text-xs bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-700 font-medium flex items-center gap-1">
@@ -258,41 +280,45 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 text-center">
+                <!-- FILTER RENTANG TANGGAL -->
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                        <i class="fa-solid fa-filter text-indigo-600"></i> Filter Rentang Tanggal
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="date" id="filter-start-date" onchange="muatLaporan()" class="flex-1 px-2.5 py-1 text-xs bg-white border border-slate-300 rounded focus:outline-none">
+                        <span class="text-xs text-slate-400">s/d</span>
+                        <input type="date" id="filter-end-date" onchange="muatLaporan()" class="flex-1 px-2.5 py-1 text-xs bg-white border border-slate-300 rounded focus:outline-none">
+                        <button onclick="resetFilterTanggal()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded font-medium">Reset</button>
+                    </div>
+                </div>
+
+                <!-- METRIK LAPORAN -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                     <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                        <div class="text-xs text-indigo-600 font-medium">Total Transaksi</div>
-                        <div id="stat-total-tx" class="text-lg font-bold text-indigo-900">0</div>
+                        <div class="text-[11px] text-indigo-600 font-medium">Total Transaksi</div>
+                        <div id="stat-total-tx" class="text-base font-bold text-indigo-900">0</div>
                     </div>
                     <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                        <div class="text-xs text-emerald-600 font-medium">Total Pendapatan</div>
-                        <div id="stat-total-omset" class="text-lg font-bold text-emerald-900">Rp 0</div>
+                        <div class="text-[11px] text-emerald-600 font-medium">Total Omset</div>
+                        <div id="stat-total-omset" class="text-base font-bold text-emerald-900">Rp 0</div>
+                    </div>
+                    <div class="bg-teal-50 p-3 rounded-lg border border-teal-100">
+                        <div class="text-[11px] text-teal-600 font-medium">Total Margin (Laba)</div>
+                        <div id="stat-total-margin" class="text-base font-bold text-teal-900">Rp 0</div>
+                    </div>
+                    <div class="bg-amber-50 p-3 rounded-lg border border-amber-100">
+                        <div class="text-[11px] text-amber-700 font-medium">Sales Hari Ini</div>
+                        <div id="stat-sales-today" class="text-base font-bold text-amber-900">Rp 0</div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-center">
-                    <div class="bg-amber-50 p-3 rounded-lg border border-amber-100 flex justify-between items-center px-4">
-                        <div class="text-left">
-                            <div class="text-xs text-amber-700 font-medium">Sales Hari Ini</div>
-                            <div id="stat-sales-today" class="text-base font-bold text-amber-900">Rp 0</div>
-                        </div>
-                        <i class="fa-solid fa-calendar-day text-amber-400 text-2xl"></i>
-                    </div>
-
-                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 flex justify-between items-center px-4">
-                        <div class="text-left">
-                            <div class="text-xs text-blue-700 font-medium">Rata-Rata Penjualan / Bulan</div>
-                            <div id="stat-avg-monthly" class="text-base font-bold text-blue-900">Rp 0</div>
-                        </div>
-                        <i class="fa-solid fa-chart-simple text-blue-400 text-2xl"></i>
-                    </div>
-                </div>
-
-                <!-- LAPORAN PENJUALAN PER ITEM (DIPISAH TANGGAL & DITOTAL PER BULAN) -->
+                <!-- LAPORAN ITEM TERJUAL & MARGIN PER HARI/BULAN -->
                 <div class="pt-2 border-t border-slate-100">
                     <h3 class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
-                        <i class="fa-solid fa-basket-shopping text-indigo-600"></i> Laporan Item Terjual Per Tanggal & Per Bulan
+                        <i class="fa-solid fa-basket-shopping text-indigo-600"></i> Rekap Penjualan & Margin Detail
                     </h3>
-                    <div id="list-sales-items-grouped" class="space-y-3 max-h-80 overflow-y-auto text-xs pr-1"></div>
+                    <div id="list-sales-items-grouped" class="space-y-3 max-h-96 overflow-y-auto text-xs pr-1"></div>
                 </div>
 
                 <!-- RIWAYAT STRUK TRANSAKSI -->
@@ -332,35 +358,87 @@
     <!-- AREA STRUK PRINT -->
     <div id="area-struk-print" class="hidden"></div>
 
-    <!-- ==================== JAVASCRIPT ==================== -->
+    <!-- ==================== JAVASCRIPT & FIREBASE INTEGRATION ==================== -->
     <script>
-        // --- DATA STATE LOCAL STORAGE ---
-        let produkList = JSON.parse(localStorage.getItem('wz_produk')) || [
-            { id: 1, code: "8999999001", name: "Aqua 600ml", price: 3500, stock: 24, minQty: 6, hargaPaket: 18000 },
-            { id: 2, code: "8999999002", name: "Indomie Goreng", price: 3500, stock: 50, minQty: 3, hargaPaket: 10000 },
-            { id: 3, code: "8999999003", name: "Kopi Kapal Api", price: 2000, stock: 30, minQty: 0, hargaPaket: 0 }
-        ];
+        // --- KONFIGURASI FIREBASE ANDA ---
+        // PASTE / GANTI BAGIAN INI DENGAN FIREBASE CONFIG MILIK ANDA
+        const firebaseConfig = {
+            // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD6RaCujqbmvae8mWVDLT4SQ3iHh17Xt-8",
+  authDomain: "warung-zahra-4a55e.firebaseapp.com",
+  projectId: "warung-zahra-4a55e",
+  storageBucket: "warung-zahra-4a55e.firebasestorage.app",
+  messagingSenderId: "1057284590224",
+  appId: "1:1057284590224:web:9fc2f02ee470e852bbe615"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+        };
+
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // --- DATA STATE REALTIME ---
+        let produkList = [];
         let keranjang = [];
-        let laporanList = JSON.parse(localStorage.getItem('wz_laporan')) || [];
+        let laporanList = [];
 
         let html5QrCodeKasir = null;
         let html5QrCodeStok = null;
         let isProcessingScanKasir = false;
 
+        // BACA DATA REALTIME DARI FIREBASE CLOUD
         document.addEventListener('DOMContentLoaded', () => {
-            simpanLocalProduk();
-            muatProdukKasir();
-            muatTabelStok();
-            muatLaporan();
+            const statusElem = document.getElementById('status-koneksi');
+
+            // Sinkronisasi Stok & Produk dari Cloud
+            db.ref('produkList').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    produkList = Array.isArray(data) ? data : Object.values(data);
+                } else {
+                    // Seed data awal jika database masih kosong
+                    produkList = [
+                        { id: 1, code: "8999999001", name: "Aqua 600ml", cost: 2800, price: 3500, stock: 24, minQty: 6, hargaPaket: 18000 },
+                        { id: 2, code: "8999999002", name: "Indomie Goreng", cost: 2900, price: 3500, stock: 50, minQty: 3, hargaPaket: 10000 },
+                        { id: 3, code: "8999999003", name: "Kopi Kapal Api", cost: 1500, price: 2000, stock: 30, minQty: 0, hargaPaket: 0 }
+                    ];
+                    simpanLocalProduk();
+                }
+                muatProdukKasir();
+                muatTabelStok();
+
+                statusElem.className = "text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1";
+                statusElem.innerHTML = `<i class="fa-solid fa-wifi"></i> Online`;
+            });
+
+            // Sinkronisasi Laporan dari Cloud
+            db.ref('laporanList').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    laporanList = Array.isArray(data) ? data : Object.values(data);
+                } else {
+                    laporanList = [];
+                }
+                muatLaporan();
+            });
         });
 
+        // SIMPAN DATA KE CLOUD (FIREBASE)
         function simpanLocalProduk() {
-            localStorage.setItem('wz_produk', JSON.stringify(produkList));
+            db.ref('produkList').set(produkList);
         }
 
         function simpanLocalLaporan() {
-            localStorage.setItem('wz_laporan', JSON.stringify(laporanList));
+            db.ref('laporanList').set(laporanList);
         }
 
         function formatRupiah(angka) {
@@ -531,6 +609,7 @@
                 keranjang.push({ 
                     id: produk.id, 
                     name: produk.name, 
+                    cost: Number(produk.cost || 0),
                     price: Number(produk.price), 
                     minQty: Number(produk.minQty || 0),
                     hargaPaket: Number(produk.hargaPaket || 0),
@@ -552,36 +631,40 @@
 
         function hitungDetailItem(item) {
             const price = Number(item.price || 0);
+            const cost = Number(item.cost || 0);
             const qty = Number(item.qty || 0);
             const minQty = Number(item.minQty || 0);
             const hargaPaket = Number(item.hargaPaket || 0);
 
             const hargaEceranNormal = price * qty;
+            const totalModal = cost * qty;
             
+            let hargaAkhir = hargaEceranNormal;
+            let potonganHarga = 0;
+            let isPromoActive = false;
+            let jumlahPaket = 0;
+            let sisaEceran = qty;
+
             if (minQty > 0 && hargaPaket > 0 && qty >= minQty) {
-                const jumlahPaket = Math.floor(qty / minQty);
-                const sisaEceran = qty % minQty;
+                jumlahPaket = Math.floor(qty / minQty);
+                sisaEceran = qty % minQty;
 
-                const totalHargaItem = (jumlahPaket * hargaPaket) + (sisaEceran * price);
-                const potonganHarga = hargaEceranNormal - totalHargaItem;
-
-                return {
-                    isPromoActive: true,
-                    jumlahPaket: jumlahPaket,
-                    sisaEceran: sisaEceran,
-                    hargaNormal: hargaEceranNormal,
-                    hargaAkhir: totalHargaItem,
-                    potongan: potonganHarga
-                };
+                hargaAkhir = (jumlahPaket * hargaPaket) + (sisaEceran * price);
+                potonganHarga = hargaEceranNormal - hargaAkhir;
+                isPromoActive = true;
             }
 
+            const marginAkhir = hargaAkhir - totalModal;
+
             return {
-                isPromoActive: false,
-                jumlahPaket: 0,
-                sisaEceran: qty,
+                isPromoActive,
+                jumlahPaket,
+                sisaEceran,
                 hargaNormal: hargaEceranNormal,
-                hargaAkhir: hargaEceranNormal,
-                potongan: 0
+                hargaAkhir,
+                potongan: potonganHarga,
+                totalModal,
+                margin: marginAkhir
             };
         }
 
@@ -687,6 +770,11 @@
             hitungKembalian();
         }
 
+        function setQuickCash(nominal) {
+            document.getElementById('input-tunai').value = nominal;
+            hitungKembalian();
+        }
+
         function ubahQty(id, delta) {
             const item = keranjang.find(k => Number(k.id) === Number(id));
             const produk = produkList.find(p => Number(p.id) === Number(id));
@@ -726,14 +814,20 @@
 
             const kembalian = tunai - calc.totalFinal;
 
+            let totalModalTx = 0;
             keranjang.forEach(item => {
+                const detail = hitungDetailItem(item);
+                totalModalTx += detail.totalModal;
+
                 const produk = produkList.find(p => Number(p.id) === Number(item.id));
                 if (produk) {
                     produk.stock -= item.qty;
                 }
             });
 
+            const marginTx = calc.totalFinal - totalModalTx;
             const sekarang = new Date();
+
             const transaksiBaru = {
                 id: Date.now(),
                 waktu: sekarang.toLocaleString('id-ID'),
@@ -742,12 +836,15 @@
                 subtotal: calc.subtotal,
                 diskon: calc.diskon,
                 total: calc.totalFinal,
+                modal: totalModalTx,
+                margin: marginTx,
                 tunai: tunai,
                 kembalian: kembalian
             };
 
             laporanList.unshift(transaksiBaru);
             
+            // Simpan Ke Firebase
             simpanLocalProduk();
             simpanLocalLaporan();
 
@@ -845,12 +942,15 @@
             );
 
             if (filtered.length === 0) {
-                body.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-400">Belum ada barang</td></tr>`;
+                body.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-slate-400">Belum ada barang</td></tr>`;
                 return;
             }
 
             filtered.forEach(p => {
-                const hasPromo = p.minQty > 0 && p.hargaPaket > 0;
+                const cost = Number(p.cost || 0);
+                const price = Number(p.price || 0);
+                const marginNormal = price - cost;
+
                 const tr = document.createElement('tr');
                 tr.className = "border-b border-slate-50 hover:bg-slate-50";
                 tr.innerHTML = `
@@ -858,10 +958,9 @@
                         <div class="font-bold text-slate-800">${p.name}</div>
                         <div class="text-[10px] text-slate-400">${p.code || 'Tanpa Barcode'}</div>
                     </td>
-                    <td class="p-2.5 font-medium">${formatRupiah(p.price)}</td>
-                    <td class="p-2.5">
-                        ${hasPromo ? `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-semibold">${p.minQty} Pcs = ${formatRupiah(p.hargaPaket)}</span>` : '<span class="text-slate-400 text-[10px]">-</span>'}
-                    </td>
+                    <td class="p-2.5 text-slate-500">${formatRupiah(cost)}</td>
+                    <td class="p-2.5 font-medium text-slate-800">${formatRupiah(price)}</td>
+                    <td class="p-2.5 font-bold text-emerald-600">${formatRupiah(marginNormal)}</td>
                     <td class="p-2.5 text-center font-bold ${p.stock <= 5 ? 'text-red-500' : 'text-slate-700'}">${p.stock}</td>
                     <td class="p-2.5 text-center">
                         <button onclick="editBarang(${p.id})" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fa-solid fa-pen"></i></button>
@@ -877,6 +976,7 @@
             const id = document.getElementById('barang-id').value;
             const code = document.getElementById('barang-code').value.trim();
             const name = document.getElementById('barang-nama').value.trim();
+            const cost = Number(document.getElementById('barang-cost').value);
             const price = Number(document.getElementById('barang-harga').value);
             const stock = Number(document.getElementById('barang-stok').value);
             const minQty = Number(document.getElementById('barang-min-qty').value) || 0;
@@ -887,13 +987,14 @@
                 if (produk) {
                     produk.code = code;
                     produk.name = name;
+                    produk.cost = cost;
                     produk.price = price;
                     produk.stock = stock;
                     produk.minQty = minQty;
                     produk.hargaPaket = hargaPaket;
                 }
             } else {
-                const newBarang = { id: Date.now(), code, name, price, stock, minQty, hargaPaket };
+                const newBarang = { id: Date.now(), code, name, cost, price, stock, minQty, hargaPaket };
                 produkList.unshift(newBarang);
             }
 
@@ -910,6 +1011,7 @@
             document.getElementById('barang-id').value = p.id;
             document.getElementById('barang-code').value = p.code || '';
             document.getElementById('barang-nama').value = p.name;
+            document.getElementById('barang-cost').value = p.cost || '';
             document.getElementById('barang-harga').value = p.price;
             document.getElementById('barang-stok').value = p.stock;
             document.getElementById('barang-min-qty').value = p.minQty || '';
@@ -936,6 +1038,12 @@
         }
 
         // --- LAPORAN ---
+        function resetFilterTanggal() {
+            document.getElementById('filter-start-date').value = '';
+            document.getElementById('filter-end-date').value = '';
+            muatLaporan();
+        }
+
         function muatLaporan() {
             const list = document.getElementById('list-laporan');
             const containerGrouped = document.getElementById('list-sales-items-grouped');
@@ -943,27 +1051,39 @@
             list.innerHTML = '';
             containerGrouped.innerHTML = '';
 
-            let omset = 0;
-            document.getElementById('stat-total-tx').innerText = laporanList.length;
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
 
-            if (laporanList.length === 0) {
+            let filteredLaporan = laporanList.filter(tx => {
+                let dateObj = tx.timestamp ? new Date(tx.timestamp) : new Date(tx.id);
+                if (isNaN(dateObj.getTime())) dateObj = new Date();
+                const txDateStr = dateObj.toISOString().split('T')[0];
+
+                if (startDate && txDateStr < startDate) return false;
+                if (endDate && txDateStr > endDate) return false;
+                return true;
+            });
+
+            document.getElementById('stat-total-tx').innerText = filteredLaporan.length;
+
+            if (filteredLaporan.length === 0) {
                 list.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">Belum ada riwayat transaksi</p>`;
                 containerGrouped.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Belum ada data penjualan item</p>`;
                 document.getElementById('stat-total-omset').innerText = formatRupiah(0);
+                document.getElementById('stat-total-margin').innerText = formatRupiah(0);
                 document.getElementById('stat-sales-today').innerText = formatRupiah(0);
-                document.getElementById('stat-avg-monthly').innerText = formatRupiah(0);
                 return;
             }
 
+            let omsetTotal = 0;
+            let marginTotal = 0;
             const todayKey = new Date().toISOString().split('T')[0];
             let salesToday = 0;
 
-            // Struktur data penampung:
-            // monthlyData = { "YYYY-MM": { omsetBulan: 0, totalQtyBulan: 0, dates: { "YYYY-MM-DD": { omsetHari: 0, items: { "Nama": { qty: 0, omset: 0 } } } } } }
             const monthlyData = {};
 
-            laporanList.forEach(tx => {
-                omset += tx.total;
+            filteredLaporan.forEach(tx => {
+                omsetTotal += tx.total;
 
                 let dateObj = tx.timestamp ? new Date(tx.timestamp) : new Date(tx.id);
                 if (isNaN(dateObj.getTime())) dateObj = new Date();
@@ -973,33 +1093,35 @@
 
                 if (dateKey === todayKey) salesToday += tx.total;
 
-                // Inisialisasi Bulan
                 if (!monthlyData[monthKey]) {
-                    monthlyData[monthKey] = { omsetBulan: 0, totalQtyBulan: 0, dates: {} };
+                    monthlyData[monthKey] = { omsetBulan: 0, marginBulan: 0, totalQtyBulan: 0, dates: {} };
                 }
                 monthlyData[monthKey].omsetBulan += tx.total;
 
-                // Inisialisasi Tanggal
                 if (!monthlyData[monthKey].dates[dateKey]) {
-                    monthlyData[monthKey].dates[dateKey] = { omsetHari: 0, items: {} };
+                    monthlyData[monthKey].dates[dateKey] = { omsetHari: 0, marginHari: 0, items: {} };
                 }
 
-                // Akumulasi Item per Tanggal
                 tx.items.forEach(item => {
                     const detail = hitungDetailItem(item);
                     const tglItemObj = monthlyData[monthKey].dates[dateKey].items;
 
                     if (!tglItemObj[item.name]) {
-                        tglItemObj[item.name] = { qty: 0, omset: 0 };
+                        tglItemObj[item.name] = { qty: 0, omset: 0, margin: 0 };
                     }
                     tglItemObj[item.name].qty += item.qty;
                     tglItemObj[item.name].omset += detail.hargaAkhir;
+                    tglItemObj[item.name].margin += detail.margin;
 
                     monthlyData[monthKey].dates[dateKey].omsetHari += detail.hargaAkhir;
+                    monthlyData[monthKey].dates[dateKey].marginHari += detail.margin;
+                    
+                    monthlyData[monthKey].marginBulan += detail.margin;
                     monthlyData[monthKey].totalQtyBulan += item.qty;
+
+                    marginTotal += detail.margin;
                 });
 
-                // Render Struk
                 const div = document.createElement('div');
                 div.className = "py-3 space-y-1 text-xs border-b border-slate-100";
                 let itemStr = tx.items.map(i => `${i.name} (${i.qty}x)`).join(', ');
@@ -1012,7 +1134,7 @@
                     <div class="text-slate-500 text-[11px] truncate">${itemStr}</div>
                     <div class="flex justify-between items-center pt-1">
                         <span class="text-[10px] text-slate-400">
-                            ${tx.diskon ? `Hemat: ${formatRupiah(tx.diskon)} | ` : ''}Bayar: ${formatRupiah(tx.tunai)}
+                            Margin: <b class="text-teal-600">${formatRupiah(tx.margin || 0)}</b> | Bayar: ${formatRupiah(tx.tunai)}
                         </span>
                         <div class="flex items-center gap-2">
                             <button onclick="cetakStrukUlang(${tx.id})" class="text-[11px] text-indigo-600 hover:underline font-semibold flex items-center gap-1">
@@ -1027,37 +1149,28 @@
                 list.appendChild(div);
             });
 
-            // Set Ringkasan Statistik
-            document.getElementById('stat-total-omset').innerText = formatRupiah(omset);
+            document.getElementById('stat-total-omset').innerText = formatRupiah(omsetTotal);
+            document.getElementById('stat-total-margin').innerText = formatRupiah(marginTotal);
             document.getElementById('stat-sales-today').innerText = formatRupiah(salesToday);
 
-            const totalMonths = Object.keys(monthlyData).length || 1;
-            const avgMonthly = omset / totalMonths;
-            document.getElementById('stat-avg-monthly').innerText = formatRupiah(Math.round(avgMonthly));
-
-            // RENDER REKAP PENJUALAN PER BULAN & PER TANGGAL
             const sortedMonths = Object.keys(monthlyData).sort().reverse();
 
             sortedMonths.forEach(mKey => {
                 const mData = monthlyData[mKey];
                 const [year, month] = mKey.split('-');
-                
-                // Format Nama Bulan Indonesia
                 const namaBulan = new Date(year, month - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
 
-                // Card Container per Bulan
                 const monthCard = document.createElement('div');
                 monthCard.className = "bg-slate-50 rounded-xl border border-slate-300 p-3 space-y-3";
 
-                // Header Total Per Bulan
                 monthCard.innerHTML = `
                     <div class="flex justify-between items-center bg-indigo-600 text-white p-2.5 rounded-lg shadow-sm">
                         <div>
                             <div class="font-bold text-xs uppercase tracking-wider"><i class="fa-solid fa-calendar text-indigo-200 mr-1"></i> Bulan ${namaBulan}</div>
-                            <div class="text-[10px] text-indigo-100 mt-0.5">Total Item Terjual: <b>${mData.totalQtyBulan} pcs</b></div>
+                            <div class="text-[10px] text-indigo-100 mt-0.5">Total Terjual: <b>${mData.totalQtyBulan} pcs</b> | Margin: <b class="text-teal-300">${formatRupiah(mData.marginBulan)}</b></div>
                         </div>
                         <div class="text-right">
-                            <div class="text-[10px] text-indigo-100 uppercase">Total Omset Bulan Ini</div>
+                            <div class="text-[10px] text-indigo-100 uppercase">Omset Bulan Ini</div>
                             <div class="text-sm font-extrabold text-amber-300">${formatRupiah(mData.omsetBulan)}</div>
                         </div>
                     </div>
@@ -1083,7 +1196,10 @@
                         itemsHtml += `
                             <div class="flex justify-between items-center text-[11px] py-1 border-b border-slate-100 last:border-0">
                                 <span class="text-slate-700 font-medium">${itemName} <b class="text-indigo-600 ml-1">(${itemObj.qty} pcs)</b></span>
-                                <span class="font-bold text-slate-800">${formatRupiah(itemObj.omset)}</span>
+                                <div class="text-right">
+                                    <span class="font-bold text-slate-800 block">${formatRupiah(itemObj.omset)}</span>
+                                    <span class="text-[9px] text-teal-600 font-semibold block">Margin: ${formatRupiah(itemObj.margin)}</span>
+                                </div>
                             </div>
                         `;
                     });
@@ -1093,9 +1209,14 @@
                             <span class="font-bold text-slate-700 text-xs flex items-center gap-1">
                                 <i class="fa-regular fa-calendar-check text-indigo-500"></i> ${formattedDate}
                             </span>
-                            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                Total: ${formatRupiah(dData.omsetHari)}
-                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                                    Margin: ${formatRupiah(dData.marginHari)}
+                                </span>
+                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                    Omset: ${formatRupiah(dData.omsetHari)}
+                                </span>
+                            </div>
                         </div>
                         <div class="pl-1 space-y-0.5">${itemsHtml}</div>
                     `;
@@ -1107,16 +1228,15 @@
             });
         }
 
-        // Export CSV Laporan Penjualan
         function exportLaporanCSV() {
             if (laporanList.length === 0) {
                 alert("Tidak ada data laporan untuk diexport!");
                 return;
             }
 
-            let csvContent = "data:text/csv;charset=utf-8,ID Transaksi,Waktu,Total Belanja,Potongan Diskon,Uang Tunai,Kembalian\n";
+            let csvContent = "data:text/csv;charset=utf-8,ID Transaksi,Waktu,Total Belanja,Margin (Laba),Potongan Diskon,Uang Tunai,Kembalian\n";
             laporanList.forEach(tx => {
-                csvContent += `"${tx.id}","${tx.waktu}",${tx.total},${tx.diskon || 0},${tx.tunai},${tx.kembalian}\n`;
+                csvContent += `"${tx.id}","${tx.waktu}",${tx.total},${tx.margin || 0},${tx.diskon || 0},${tx.tunai},${tx.kembalian}\n`;
             });
 
             const encodedUri = encodeURI(csvContent);
@@ -1132,7 +1252,6 @@
             if (confirm("Hapus riwayat transaksi ini?")) {
                 laporanList = laporanList.filter(tx => Number(tx.id) !== Number(txId));
                 simpanLocalLaporan();
-                muatLaporan();
             }
         }
 
@@ -1140,7 +1259,6 @@
             if (confirm("Yakin ingin menghapus SELURUH riwayat transaksi?")) {
                 laporanList = [];
                 simpanLocalLaporan();
-                muatLaporan();
             }
         }
     </script>
