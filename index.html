@@ -6,13 +6,11 @@
     <title>Warung Zahra - Kasir & Stok Multi-Device</title>
 
     <link rel="manifest" href="manifest.json">
-    <!-- PWA & FULLSCREEN META TAGS -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#4f46e5">
 
-    <!-- IKON APLIKASI UNTUK HOMESCREEN HP -->
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3144/3144456.png">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3144/3144456.png" type="image/png">
 
@@ -29,7 +27,7 @@
     <style>
         @media print {
             body { background: white !important; color: black !important; margin: 0; padding: 0; }
-            .no-print, header, nav, main, #modal-struk { display: none !important; }
+            .no-print, header, nav, main, #modal-struk, #modal-qris { display: none !important; }
             #area-struk-print { 
                 display: block !important;
                 width: 100% !important;
@@ -56,9 +54,6 @@
                 <span id="status-koneksi" class="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
                     <i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan...
                 </span>
-                <div class="text-xs bg-indigo-700 px-2.5 py-1 rounded-full font-medium hidden sm:block">
-                    Kasir & Inventaris
-                </div>
             </div>
         </div>
     </header>
@@ -109,9 +104,7 @@
                     <span>Pilih Produk</span>
                     <span id="total-jenis-barang" class="text-xs font-normal text-slate-500">0 Produk</span>
                 </h2>
-                <div id="grid-produk-kasir" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-64 overflow-y-auto p-1">
-                    <!-- Item produk disuntik via JS -->
-                </div>
+                <div id="grid-produk-kasir" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-64 overflow-y-auto p-1"></div>
             </div>
 
             <!-- Keranjang Belanja -->
@@ -123,11 +116,9 @@
                     <button onclick="kosongkanKeranjang()" class="text-xs text-red-500 hover:underline">Kosongkan</button>
                 </div>
 
-                <div id="list-keranjang" class="divide-y divide-slate-100 max-h-56 overflow-y-auto">
-                    <!-- Item keranjang disuntik via JS -->
-                </div>
+                <div id="list-keranjang" class="divide-y divide-slate-100 max-h-56 overflow-y-auto"></div>
 
-                <!-- Summary & Pembayaran Tunai -->
+                <!-- Summary & Pembayaran -->
                 <div class="pt-2 border-t border-slate-200 space-y-3">
                     <div class="space-y-1">
                         <div class="flex justify-between items-center text-slate-500 text-xs">
@@ -144,29 +135,55 @@
                         </div>
                     </div>
 
-                    <!-- Input Uang Tunai & Quick Cash -->
-                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
-                        <div class="flex justify-between items-center gap-2">
-                            <label class="text-xs font-bold text-slate-600">Uang Tunai (Rp):</label>
-                            <button onclick="setUangPas()" class="text-[11px] bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-2 py-0.5 rounded">
-                                Uang Pas
+                    <!-- Input Pembayaran & Metode -->
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-3">
+                        <div class="flex gap-2">
+                            <button type="button" id="btn-metode-tunai" onclick="pilihMetodeBayar('TUNAI')" class="flex-1 py-2 text-xs font-bold rounded-lg border bg-indigo-600 text-white border-indigo-600 transition flex items-center justify-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-money-bill-wave"></i> Tunai
+                            </button>
+                            <button type="button" id="btn-metode-qris" onclick="pilihMetodeBayar('QRIS')" class="flex-1 py-2 text-xs font-bold rounded-lg border bg-white text-slate-700 border-slate-300 hover:bg-slate-100 transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-qrcode text-emerald-600"></i> QRIS / Non-Tunai
                             </button>
                         </div>
-                        <input type="number" id="input-tunai" oninput="hitungKembalian()" min="0" placeholder="Masukkan nominal..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        
-                        <!-- QUICK CASH BUTTONS -->
-                        <div class="grid grid-cols-5 gap-1 pt-1">
-                            <button onclick="setQuickCash(5000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">5k</button>
-                            <button onclick="setQuickCash(10000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">10k</button>
-                            <button onclick="setQuickCash(20000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">20k</button>
-                            <button onclick="setQuickCash(50000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">50k</button>
-                            <button onclick="setQuickCash(100000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">100k</button>
+
+                        <!-- Panel Tunai -->
+                        <div id="panel-bayar-tunai" class="space-y-2">
+                            <div class="flex justify-between items-center gap-2">
+                                <label class="text-xs font-bold text-slate-600">Uang Tunai (Rp):</label>
+                                <button onclick="setUangPas()" class="text-[11px] bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-2 py-0.5 rounded">Uang Pas</button>
+                            </div>
+                            <input type="number" id="input-tunai" oninput="hitungKembalian()" min="0" placeholder="Masukkan nominal..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            
+                            <div class="grid grid-cols-5 gap-1 pt-1">
+                                <button onclick="setQuickCash(5000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">5k</button>
+                                <button onclick="setQuickCash(10000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">10k</button>
+                                <button onclick="setQuickCash(20000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">20k</button>
+                                <button onclick="setQuickCash(50000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">50k</button>
+                                <button onclick="setQuickCash(100000)" class="bg-white border border-slate-300 hover:bg-slate-100 text-[10px] font-bold py-1 rounded text-slate-700">100k</button>
+                            </div>
+
+                            <div class="flex justify-between items-center pt-1 text-sm border-t border-slate-200 mt-2">
+                                <span class="font-medium text-slate-600">Kembalian:</span>
+                                <span id="text-kembalian" class="font-bold text-slate-800">Rp 0</span>
+                            </div>
                         </div>
 
-                        <div class="flex justify-between items-center pt-1 text-sm border-t border-slate-200 mt-2">
-                            <span class="font-medium text-slate-600">Kembalian:</span>
-                            <span id="text-kembalian" class="font-bold text-slate-800">Rp 0</span>
+                        <!-- Panel QRIS -->
+                        <div id="panel-bayar-qris" class="hidden space-y-2 text-center p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg">
+                            <span class="text-xs font-bold text-emerald-900 block"><i class="fa-solid fa-circle-check text-emerald-600"></i> Pembayaran QRIS Pas</span>
+                            <p class="text-[11px] text-emerald-700">Minta pembeli melakukan scan pada QRIS Warung (GoPay / DANA / ShopeePay / BCA / dll).</p>
+                            
+                            <div class="flex gap-2 justify-center pt-1">
+                                <button onclick="tampilkanModalQRIS()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow">
+                                    <i class="fa-solid fa-qrcode"></i> Tampilkan QRIS
+                                </button>
+                                <label class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs cursor-pointer flex items-center gap-1">
+                                    <i class="fa-solid fa-upload"></i> Upload Foto QRIS
+                                    <input type="file" accept="image/*" onchange="uploadGambarQRIS(event)" class="hidden">
+                                </label>
+                            </div>
                         </div>
+
                     </div>
 
                     <button onclick="prosesTransaksi()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 text-sm transition">
@@ -180,7 +197,6 @@
         <section id="tab-stok" class="hidden space-y-4">
             <div id="notif-scan-stok" class="hidden text-center text-xs font-bold p-2 rounded shadow transition"></div>
 
-            <!-- Form Tambah/Edit Barang -->
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
                 <h2 id="form-stok-title" class="font-bold text-slate-800 text-sm border-b pb-2 flex items-center gap-2">
                     <i class="fa-solid fa-plus-circle text-indigo-600"></i> Tambah / Edit Barang
@@ -212,11 +228,11 @@
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Modal / pcs (Rp) *</label>
-                            <input type="number" id="barang-cost" required min="0" placeholder="Contoh: 3000" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <input type="number" id="barang-cost" required min="0" placeholder="3000" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Harga Jual / pcs (Rp) *</label>
-                            <input type="number" id="barang-harga" required min="0" placeholder="Contoh: 3500" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <input type="number" id="barang-harga" required min="0" placeholder="3500" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Stok *</label>
@@ -224,7 +240,6 @@
                         </div>
                     </div>
 
-                    <!-- ATURAN PAKET KELIPATAN PROMO -->
                     <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 space-y-2">
                         <div class="text-xs font-bold text-amber-800 flex items-center gap-1">
                             <i class="fa-solid fa-bolt"></i> Aturan Promo Kelipatan Paket
@@ -242,17 +257,12 @@
                     </div>
 
                     <div class="flex gap-2 pt-1">
-                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-semibold transition">
-                            Simpan Barang
-                        </button>
-                        <button type="button" onclick="resetFormStok()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm transition">
-                            Batal
-                        </button>
+                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-semibold transition">Simpan Barang</button>
+                        <button type="button" onclick="resetFormStok()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm transition">Batal</button>
                     </div>
                 </form>
             </div>
 
-            <!-- Tabel Daftar Stok -->
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
                 <div class="flex justify-between items-center border-b pb-2">
                     <h2 class="font-bold text-slate-800 text-sm">Daftar Inventaris</h2>
@@ -271,9 +281,7 @@
                                 <th class="p-2.5 text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="tabel-stok-body" class="divide-y divide-slate-100">
-                            <!-- Data disuntik via JS -->
-                        </tbody>
+                        <tbody id="tabel-stok-body" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
@@ -292,7 +300,6 @@
                     </div>
                 </div>
 
-                <!-- FILTER RENTANG TANGGAL -->
                 <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
                     <div class="text-xs font-bold text-slate-700 flex items-center gap-1">
                         <i class="fa-solid fa-filter text-indigo-600"></i> Filter Rentang Tanggal
@@ -305,7 +312,6 @@
                     </div>
                 </div>
 
-                <!-- METRIK LAPORAN -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                     <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
                         <div class="text-[11px] text-indigo-600 font-medium">Total Transaksi</div>
@@ -319,13 +325,12 @@
                         <div class="text-[11px] text-teal-600 font-medium">Total Margin (Laba)</div>
                         <div id="stat-total-margin" class="text-base font-bold text-teal-900">Rp 0</div>
                     </div>
-                    <div class="bg-amber-50 p-3 rounded-lg border border-amber-100">
-                        <div class="text-[11px] text-amber-700 font-medium">Sales Hari Ini</div>
-                        <div id="stat-sales-today" class="text-base font-bold text-amber-900">Rp 0</div>
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                        <div class="text-[11px] text-blue-700 font-medium">Omset QRIS</div>
+                        <div id="stat-sales-qris" class="text-base font-bold text-blue-900">Rp 0</div>
                     </div>
                 </div>
 
-                <!-- LAPORAN ITEM TERJUAL & MARGIN PER HARI/BULAN -->
                 <div class="pt-2 border-t border-slate-100">
                     <h3 class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
                         <i class="fa-solid fa-basket-shopping text-indigo-600"></i> Rekap Penjualan & Margin Detail
@@ -333,7 +338,6 @@
                     <div id="list-sales-items-grouped" class="space-y-3 max-h-96 overflow-y-auto text-xs pr-1"></div>
                 </div>
 
-                <!-- RIWAYAT STRUK TRANSAKSI -->
                 <div class="pt-2 border-t border-slate-100">
                     <h3 class="text-xs font-bold text-slate-700 mb-2">Riwayat Struk Transaksi</h3>
                     <div id="list-laporan" class="divide-y divide-slate-100 max-h-60 overflow-y-auto pr-1"></div>
@@ -342,6 +346,37 @@
         </section>
 
     </main>
+
+    <!-- ==================== MODAL QRIS ==================== -->
+    <div id="modal-qris" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 no-print">
+        <div class="bg-white w-full max-w-xs rounded-2xl p-5 space-y-4 shadow-2xl text-center">
+            <div class="flex justify-between items-center border-b pb-2">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-qrcode text-emerald-600 text-lg"></i>
+                    <h3 class="font-bold text-slate-800 text-sm">QRIS Warung Zahra</h3>
+                </div>
+                <button onclick="tutupModalQRIS()" class="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+            </div>
+
+            <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100">
+                <div class="text-[11px] text-emerald-700 font-medium">Total Tagihan:</div>
+                <div id="qris-modal-nominal" class="text-xl font-extrabold text-emerald-900">Rp 0</div>
+            </div>
+
+            <div class="flex justify-center my-2">
+                <img id="img-qris-display" src="" alt="Scan QRIS Warung" class="w-56 h-auto border-2 border-dashed border-slate-300 rounded-lg p-1 object-contain hidden">
+                <div id="placeholder-qris" class="w-56 h-56 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center p-4 text-center bg-slate-50">
+                    <i class="fa-solid fa-image text-slate-300 text-4xl mb-2"></i>
+                    <p class="text-xs text-slate-500 font-semibold">Belum Ada Gambar QRIS</p>
+                    <p class="text-[10px] text-slate-400 mt-1">Upload foto QRIS (GoPay/DANA/ShopeePay/dll) dari galeri Anda</p>
+                </div>
+            </div>
+
+            <button onclick="tutupModalQRIS()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs">
+                Selesai / Pembayaran Diterima
+            </button>
+        </div>
+    </div>
 
     <!-- ==================== MODAL STRUK ==================== -->
     <div id="modal-struk" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 no-print">
@@ -372,7 +407,6 @@
 
     <!-- ==================== JAVASCRIPT & FIREBASE INTEGRATION ==================== -->
     <script>
-        // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyD6RaCujqbmvae8mWVDLT4SQ3iHh17Xt-8",
             authDomain: "warung-zahra-4a55e.firebaseapp.com",
@@ -383,26 +417,26 @@
             appId: "1:1057284590224:web:9fc2f02ee470e852bbe615"
         };
 
-        // Inisialisasi Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.database();
 
-        // --- DATA STATE REALTIME ---
         let produkList = [];
         let keranjang = [];
         let laporanList = [];
+
+        let metodePembayaran = 'TUNAI';
+        let qrisImageData = localStorage.getItem('warung_zahra_qris') || '';
 
         let html5QrCodeKasir = null;
         let html5QrCodeStok = null;
         let isProcessingScanKasir = false;
 
-        // BACA DATA REALTIME DARI FIREBASE CLOUD
         document.addEventListener('DOMContentLoaded', () => {
             const statusElem = document.getElementById('status-koneksi');
+            muatGambarQRIS();
 
-            // Cek Status Koneksi Socket Firebase
             db.ref('.info/connected').on('value', (snap) => {
                 if (snap.val() === true) {
                     statusElem.className = "text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1";
@@ -413,41 +447,22 @@
                 }
             });
 
-            // Sinkronisasi Stok & Produk dari Cloud
             db.ref('produkList').on('value', (snapshot) => {
                 const data = snapshot.val();
-                if (data) {
-                    produkList = Array.isArray(data) ? data : Object.values(data);
-                } else {
-                    produkList = [];
-                }
+                produkList = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
                 muatProdukKasir();
                 muatTabelStok();
-            }, (error) => {
-                statusElem.className = "text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1";
-                statusElem.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Error Akses`;
             });
 
-            // Sinkronisasi Laporan dari Cloud
             db.ref('laporanList').on('value', (snapshot) => {
                 const data = snapshot.val();
-                if (data) {
-                    laporanList = Array.isArray(data) ? data : Object.values(data);
-                } else {
-                    laporanList = [];
-                }
+                laporanList = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
                 muatLaporan();
             });
         });
 
-        // SIMPAN DATA KE CLOUD (FIREBASE)
-        function simpanLocalProduk() {
-            db.ref('produkList').set(produkList);
-        }
-
-        function simpanLocalLaporan() {
-            db.ref('laporanList').set(laporanList);
-        }
+        function simpanLocalProduk() { db.ref('produkList').set(produkList); }
+        function simpanLocalLaporan() { db.ref('laporanList').set(laporanList); }
 
         function formatRupiah(angka) {
             return 'Rp ' + Number(angka || 0).toLocaleString('id-ID');
@@ -455,7 +470,6 @@
 
         function gantiTab(tabName) {
             matikanSemuaKamera();
-            
             ['kasir', 'stok', 'laporan'].forEach(tab => {
                 document.getElementById(`tab-${tab}`).classList.add('hidden');
                 document.getElementById(`tab-btn-${tab}`).className = "flex-1 py-3 text-slate-500 hover:text-indigo-600 border-b-2 border-transparent flex items-center justify-center gap-2";
@@ -471,19 +485,12 @@
 
         function matikanSemuaKamera() {
             if (html5QrCodeKasir) {
-                html5QrCodeKasir.stop().then(() => {
-                    html5QrCodeKasir.clear();
-                    html5QrCodeKasir = null;
-                }).catch(() => { html5QrCodeKasir = null; });
+                html5QrCodeKasir.stop().then(() => { html5QrCodeKasir.clear(); html5QrCodeKasir = null; }).catch(() => { html5QrCodeKasir = null; });
                 document.getElementById('wrapper-kamera-kasir').classList.add('hidden');
                 document.getElementById('text-btn-kamera-kasir').innerText = "Buka Kamera";
             }
-
             if (html5QrCodeStok) {
-                html5QrCodeStok.stop().then(() => {
-                    html5QrCodeStok.clear();
-                    html5QrCodeStok = null;
-                }).catch(() => { html5QrCodeStok = null; });
+                html5QrCodeStok.stop().then(() => { html5QrCodeStok.clear(); html5QrCodeStok = null; }).catch(() => { html5QrCodeStok = null; });
                 document.getElementById('wrapper-kamera-stok').classList.add('hidden');
                 document.getElementById('text-btn-kamera-stok').innerText = "Scan";
             }
@@ -497,12 +504,10 @@
                 document.getElementById('text-btn-kamera-kasir').innerText = "Tutup Kamera";
 
                 html5QrCodeKasir = new Html5Qrcode("reader-kasir");
-                const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-
                 try {
-                    await html5QrCodeKasir.start({ facingMode: "environment" }, config, onScanSuccessKasir);
+                    await html5QrCodeKasir.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSuccessKasir);
                 } catch (err) {
-                    alert("Akses kamera tidak diizinkan atau tidak tersedia.");
+                    alert("Akses kamera tidak diizinkan.");
                     matikanSemuaKamera();
                 }
             } else {
@@ -539,12 +544,10 @@
                 document.getElementById('text-btn-kamera-stok').innerText = "Tutup";
 
                 html5QrCodeStok = new Html5Qrcode("reader-stok");
-                const config = { fps: 10, qrbox: { width: 200, height: 120 } };
-
                 try {
-                    await html5QrCodeStok.start({ facingMode: "environment" }, config, onScanSuccessStok);
+                    await html5QrCodeStok.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 200, height: 120 } }, onScanSuccessStok);
                 } catch (err) {
-                    alert("Akses kamera tidak diizinkan atau tidak tersedia.");
+                    alert("Akses kamera tidak diizinkan.");
                     matikanSemuaKamera();
                 }
             } else {
@@ -562,6 +565,69 @@
                 notif.className = "hidden";
                 matikanSemuaKamera();
             }, 800);
+        }
+
+        // --- MANAJEMEN QRIS ---
+        function pilihMetodeBayar(metode) {
+            metodePembayaran = metode;
+            const btnTunai = document.getElementById('btn-metode-tunai');
+            const btnQris = document.getElementById('btn-metode-qris');
+            const panelTunai = document.getElementById('panel-bayar-tunai');
+            const panelQris = document.getElementById('panel-bayar-qris');
+
+            if (metode === 'TUNAI') {
+                btnTunai.className = "flex-1 py-2 text-xs font-bold rounded-lg border bg-indigo-600 text-white border-indigo-600 transition flex items-center justify-center gap-1.5 shadow-sm";
+                btnQris.className = "flex-1 py-2 text-xs font-bold rounded-lg border bg-white text-slate-700 border-slate-300 hover:bg-slate-100 transition flex items-center justify-center gap-1.5";
+                panelTunai.classList.remove('hidden');
+                panelQris.classList.add('hidden');
+            } else {
+                btnQris.className = "flex-1 py-2 text-xs font-bold rounded-lg border bg-emerald-600 text-white border-emerald-600 transition flex items-center justify-center gap-1.5 shadow-sm";
+                btnTunai.className = "flex-1 py-2 text-xs font-bold rounded-lg border bg-white text-slate-700 border-slate-300 hover:bg-slate-100 transition flex items-center justify-center gap-1.5";
+                panelQris.classList.remove('hidden');
+                panelTunai.classList.add('hidden');
+            }
+        }
+
+        function uploadGambarQRIS(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                qrisImageData = event.target.result;
+                localStorage.setItem('warung_zahra_qris', qrisImageData);
+                muatGambarQRIS();
+                alert("Gambar QRIS berhasil disimpan!");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function muatGambarQRIS() {
+            const img = document.getElementById('img-qris-display');
+            const placeholder = document.getElementById('placeholder-qris');
+
+            if (qrisImageData) {
+                img.src = qrisImageData;
+                img.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                img.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+        }
+
+        function tampilkanModalQRIS() {
+            const calc = getTotalHargaFinal();
+            if (calc.totalFinal <= 0) {
+                alert("Keranjang masih kosong!");
+                return;
+            }
+            document.getElementById('qris-modal-nominal').innerText = formatRupiah(calc.totalFinal);
+            document.getElementById('modal-qris').classList.remove('hidden');
+        }
+
+        function tutupModalQRIS() {
+            document.getElementById('modal-qris').classList.add('hidden');
         }
 
         // --- KASIR & KERANJANG ---
@@ -662,8 +728,6 @@
                 isPromoActive = true;
             }
 
-            const marginAkhir = hargaAkhir - totalModal;
-
             return {
                 isPromoActive,
                 jumlahPaket,
@@ -672,7 +736,7 @@
                 hargaAkhir,
                 potongan: potonganHarga,
                 totalModal,
-                margin: marginAkhir
+                margin: hargaAkhir - totalModal
             };
         }
 
@@ -752,6 +816,8 @@
         }
 
         function hitungKembalian() {
+            if (metodePembayaran === 'QRIS') return;
+
             const calc = getTotalHargaFinal();
             const tunai = Number(document.getElementById('input-tunai').value) || 0;
             const elemKembalian = document.getElementById('text-kembalian');
@@ -813,14 +879,20 @@
             }
 
             const calc = getTotalHargaFinal();
-            const tunai = Number(document.getElementById('input-tunai').value) || 0;
+            let tunai = 0;
+            let kembalian = 0;
 
-            if (tunai < calc.totalFinal) {
-                alert(`Uang tunai kurang! Kurang ${formatRupiah(calc.totalFinal - tunai)}`);
-                return;
+            if (metodePembayaran === 'TUNAI') {
+                tunai = Number(document.getElementById('input-tunai').value) || 0;
+                if (tunai < calc.totalFinal) {
+                    alert(`Uang tunai kurang! Kurang ${formatRupiah(calc.totalFinal - tunai)}`);
+                    return;
+                }
+                kembalian = tunai - calc.totalFinal;
+            } else {
+                tunai = calc.totalFinal;
+                kembalian = 0;
             }
-
-            const kembalian = tunai - calc.totalFinal;
 
             let totalModalTx = 0;
             keranjang.forEach(item => {
@@ -840,6 +912,7 @@
                 id: Date.now(),
                 waktu: sekarang.toLocaleString('id-ID'),
                 timestamp: sekarang.toISOString(),
+                metode: metodePembayaran,
                 items: JSON.parse(JSON.stringify(keranjang)),
                 subtotal: calc.subtotal,
                 diskon: calc.diskon,
@@ -852,10 +925,10 @@
 
             laporanList.unshift(transaksiBaru);
             
-            // Simpan Ke Firebase
             simpanLocalProduk();
             simpanLocalLaporan();
 
+            tutupModalQRIS();
             bukaModalStruk(transaksiBaru);
             kosongkanKeranjang();
             muatProdukKasir();
@@ -868,7 +941,6 @@
 
             let itemRows = tx.items.map(i => {
                 const detail = hitungDetailItem(i);
-
                 return `
                     <div style="margin-bottom: 4px;">
                         <div style="display: flex; justify-content: space-between;">
@@ -887,6 +959,7 @@
                 </div>
                 <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
                 <div style="font-size: 10px; margin-bottom: 6px;">Tgl: ${tx.waktu}</div>
+                <div style="font-size: 10px; font-weight: bold; margin-bottom: 6px;">Metode: ${tx.metode || 'TUNAI'}</div>
                 <div>${itemRows}</div>
                 <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
                 ${tx.diskon > 0 ? `
@@ -904,7 +977,7 @@
                     <span>${formatRupiah(tx.total)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Bayar</span>
+                    <span>Bayar (${tx.metode || 'TUNAI'})</span>
                     <span>${formatRupiah(tx.tunai)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
@@ -922,22 +995,13 @@
             document.getElementById('modal-struk').classList.remove('hidden');
         }
 
-        function bukaModalStruk(tx) {
-            bukaModalStrukByTx(tx);
-        }
-
+        function bukaModalStruk(tx) { bukaModalStrukByTx(tx); }
         function cetakStrukUlang(txId) {
             const tx = laporanList.find(t => Number(t.id) === Number(txId));
             if (tx) bukaModalStrukByTx(tx);
         }
-
-        function cetakStruk() {
-            window.print();
-        }
-
-        function tutupModalStruk() {
-            document.getElementById('modal-struk').classList.add('hidden');
-        }
+        function cetakStruk() { window.print(); }
+        function tutupModalStruk() { document.getElementById('modal-struk').classList.add('hidden'); }
 
         // --- STOK BARANG ---
         function muatTabelStok() {
@@ -957,7 +1021,6 @@
             filtered.forEach(p => {
                 const cost = Number(p.cost || 0);
                 const price = Number(p.price || 0);
-                const marginNormal = price - cost;
 
                 const tr = document.createElement('tr');
                 tr.className = "border-b border-slate-50 hover:bg-slate-50";
@@ -968,7 +1031,7 @@
                     </td>
                     <td class="p-2.5 text-slate-500">${formatRupiah(cost)}</td>
                     <td class="p-2.5 font-medium text-slate-800">${formatRupiah(price)}</td>
-                    <td class="p-2.5 font-bold text-emerald-600">${formatRupiah(marginNormal)}</td>
+                    <td class="p-2.5 font-bold text-emerald-600">${formatRupiah(price - cost)}</td>
                     <td class="p-2.5 text-center font-bold ${p.stock <= 5 ? 'text-red-500' : 'text-slate-700'}">${p.stock}</td>
                     <td class="p-2.5 text-center">
                         <button onclick="editBarang(${p.id})" class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fa-solid fa-pen"></i></button>
@@ -993,17 +1056,11 @@
             if (id) {
                 const produk = produkList.find(p => Number(p.id) === Number(id));
                 if (produk) {
-                    produk.code = code;
-                    produk.name = name;
-                    produk.cost = cost;
-                    produk.price = price;
-                    produk.stock = stock;
-                    produk.minQty = minQty;
-                    produk.hargaPaket = hargaPaket;
+                    produk.code = code; produk.name = name; produk.cost = cost; produk.price = price;
+                    produk.stock = stock; produk.minQty = minQty; produk.hargaPaket = hargaPaket;
                 }
             } else {
-                const newBarang = { id: Date.now(), code, name, cost, price, stock, minQty, hargaPaket };
-                produkList.unshift(newBarang);
+                produkList.unshift({ id: Date.now(), code, name, cost, price, stock, minQty, hargaPaket });
             }
 
             simpanLocalProduk();
@@ -1055,7 +1112,6 @@
         function muatLaporan() {
             const list = document.getElementById('list-laporan');
             const containerGrouped = document.getElementById('list-sales-items-grouped');
-            
             list.innerHTML = '';
             containerGrouped.innerHTML = '';
 
@@ -1079,27 +1135,25 @@
                 containerGrouped.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Belum ada data penjualan item</p>`;
                 document.getElementById('stat-total-omset').innerText = formatRupiah(0);
                 document.getElementById('stat-total-margin').innerText = formatRupiah(0);
-                document.getElementById('stat-sales-today').innerText = formatRupiah(0);
+                document.getElementById('stat-sales-qris').innerText = formatRupiah(0);
                 return;
             }
 
             let omsetTotal = 0;
             let marginTotal = 0;
-            const todayKey = new Date().toISOString().split('T')[0];
-            let salesToday = 0;
+            let salesQRIS = 0;
 
             const monthlyData = {};
 
             filteredLaporan.forEach(tx => {
                 omsetTotal += tx.total;
+                if (tx.metode === 'QRIS') salesQRIS += tx.total;
 
                 let dateObj = tx.timestamp ? new Date(tx.timestamp) : new Date(tx.id);
                 if (isNaN(dateObj.getTime())) dateObj = new Date();
 
                 const dateKey = dateObj.toISOString().split('T')[0];
                 const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
-
-                if (dateKey === todayKey) salesToday += tx.total;
 
                 if (!monthlyData[monthKey]) {
                     monthlyData[monthKey] = { omsetBulan: 0, marginBulan: 0, totalQtyBulan: 0, dates: {} };
@@ -1123,7 +1177,6 @@
 
                     monthlyData[monthKey].dates[dateKey].omsetHari += detail.hargaAkhir;
                     monthlyData[monthKey].dates[dateKey].marginHari += detail.margin;
-                    
                     monthlyData[monthKey].marginBulan += detail.margin;
                     monthlyData[monthKey].totalQtyBulan += item.qty;
 
@@ -1136,7 +1189,7 @@
 
                 div.innerHTML = `
                     <div class="flex justify-between font-semibold text-slate-700">
-                        <span>${tx.waktu}</span>
+                        <span>${tx.waktu} <b class="ml-1 text-[10px] ${tx.metode === 'QRIS' ? 'bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded' : 'bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded'}">${tx.metode || 'TUNAI'}</b></span>
                         <span class="text-emerald-600">${formatRupiah(tx.total)}</span>
                     </div>
                     <div class="text-slate-500 text-[11px] truncate">${itemStr}</div>
@@ -1159,7 +1212,7 @@
 
             document.getElementById('stat-total-omset').innerText = formatRupiah(omsetTotal);
             document.getElementById('stat-total-margin').innerText = formatRupiah(marginTotal);
-            document.getElementById('stat-sales-today').innerText = formatRupiah(salesToday);
+            document.getElementById('stat-sales-qris').innerText = formatRupiah(salesQRIS);
 
             const sortedMonths = Object.keys(monthlyData).sort().reverse();
 
@@ -1242,9 +1295,9 @@
                 return;
             }
 
-            let csvContent = "data:text/csv;charset=utf-8,ID Transaksi,Waktu,Total Belanja,Margin (Laba),Potongan Diskon,Uang Tunai,Kembalian\n";
+            let csvContent = "data:text/csv;charset=utf-8,ID Transaksi,Waktu,Metode,Total Belanja,Margin (Laba),Potongan Diskon,Uang Tunai,Kembalian\n";
             laporanList.forEach(tx => {
-                csvContent += `"${tx.id}","${tx.waktu}",${tx.total},${tx.margin || 0},${tx.diskon || 0},${tx.tunai},${tx.kembalian}\n`;
+                csvContent += `"${tx.id}","${tx.waktu}","${tx.metode || 'TUNAI'}",${tx.total},${tx.margin || 0},${tx.diskon || 0},${tx.tunai},${tx.kembalian}\n`;
             });
 
             const encodedUri = encodeURI(csvContent);
