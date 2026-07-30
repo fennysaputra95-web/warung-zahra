@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warung Zahra - Kasir & Stok Multi-Device</title>
+
+    <!-- PWA & FULLSCREEN META TAGS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4f46e5">
+
+    <!-- IKON APLIKASI UNTUK HOMESCREEN HP -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3144/3144456.png">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3144/3144456.png" type="image/png">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome CDN -->
@@ -31,7 +42,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans pb-20 md:pb-6">
+<body class="bg-slate-100 text-slate-800 font-sans pb-20 md:pb-6 select-none">
 
     <!-- HEADER / NAVBAR -->
     <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-40 no-print">
@@ -390,7 +401,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const statusElem = document.getElementById('status-koneksi');
 
-            // Cek Status Koneksi Socket Firebase secara khusus
+            // Cek Status Koneksi Socket Firebase
             db.ref('.info/connected').on('value', (snap) => {
                 if (snap.val() === true) {
                     statusElem.className = "text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1";
@@ -401,20 +412,19 @@
                 }
             });
 
-            // Sinkronisasi Stok & Produk dari Cloud (Dibuat Aman jika Database Kosong)
+            // Sinkronisasi Stok & Produk dari Cloud
             db.ref('produkList').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     produkList = Array.isArray(data) ? data : Object.values(data);
                 } else {
-                    produkList = []; // Tetap kosong tanpa membuat ulang item contoh
+                    produkList = [];
                 }
                 muatProdukKasir();
                 muatTabelStok();
             }, (error) => {
                 statusElem.className = "text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1";
                 statusElem.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Error Akses`;
-                alert("Gagal terhubung: " + error.message);
             });
 
             // Sinkronisasi Laporan dari Cloud
