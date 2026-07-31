@@ -197,6 +197,23 @@
         <section id="tab-stok" class="hidden space-y-4">
             <div id="notif-scan-stok" class="hidden text-center text-xs font-bold p-2 rounded shadow transition"></div>
 
+            <!-- Kartu Ringkasan Total Aset & Stok -->
+            <div class="grid grid-cols-3 gap-2 sm:gap-3 text-center">
+                <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 shadow-sm">
+                    <div class="text-[10px] sm:text-xs text-indigo-600 font-semibold">Total Item (Qty)</div>
+                    <div id="stat-stok-total-qty" class="text-sm sm:text-base font-bold text-indigo-900 mt-1">0 pcs</div>
+                </div>
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 shadow-sm">
+                    <div class="text-[10px] sm:text-xs text-amber-700 font-semibold">Aset Modal</div>
+                    <div id="stat-stok-total-modal" class="text-sm sm:text-base font-bold text-amber-900 mt-1">Rp 0</div>
+                </div>
+                <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100 shadow-sm">
+                    <div class="text-[10px] sm:text-xs text-emerald-700 font-semibold">Potensi Omset</div>
+                    <div id="stat-stok-total-jual" class="text-sm sm:text-base font-bold text-emerald-900 mt-1">Rp 0</div>
+                </div>
+            </div>
+
+            <!-- Form Tambah / Edit Barang -->
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
                 <h2 id="form-stok-title" class="font-bold text-slate-800 text-sm border-b pb-2 flex items-center gap-2">
                     <i class="fa-solid fa-plus-circle text-indigo-600"></i> Tambah / Edit Barang
@@ -263,6 +280,7 @@
                 </form>
             </div>
 
+            <!-- Tabel Daftar Inventaris -->
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
                 <div class="flex justify-between items-center border-b pb-2">
                     <h2 class="font-bold text-slate-800 text-sm">Daftar Inventaris</h2>
@@ -1022,11 +1040,32 @@
         function cetakStruk() { window.print(); }
         function tutupModalStruk() { document.getElementById('modal-struk').classList.add('hidden'); }
 
-        // --- STOK BARANG ---
+        // --- STOK BARANG & TOTAL INVENTORI ---
         function muatTabelStok() {
             const query = document.getElementById('search-stok').value.toLowerCase();
             const body = document.getElementById('tabel-stok-body');
             body.innerHTML = '';
+
+            // Penampung kalkulasi inventori
+            let akumulasiQty = 0;
+            let akumulasiModalRupiah = 0;
+            let akumulasiPotensiOmset = 0;
+
+            // Hitung total aset dari seluruh produk
+            produkList.forEach(p => {
+                const stok = Number(p.stock || 0);
+                const modal = Number(p.cost || 0);
+                const hargaJual = Number(p.price || 0);
+
+                akumulasiQty += stok;
+                akumulasiModalRupiah += (stok * modal);
+                akumulasiPotensiOmset += (stok * hargaJual);
+            });
+
+            // Update statistik aset ke elemen UI
+            document.getElementById('stat-stok-total-qty').innerText = `${akumulasiQty.toLocaleString('id-ID')} pcs`;
+            document.getElementById('stat-stok-total-modal').innerText = formatRupiah(akumulasiModalRupiah);
+            document.getElementById('stat-stok-total-jual').innerText = formatRupiah(akumulasiPotensiOmset);
 
             const filtered = produkList.filter(p => 
                 p.name.toLowerCase().includes(query) || (p.code && p.code.toLowerCase().includes(query))
