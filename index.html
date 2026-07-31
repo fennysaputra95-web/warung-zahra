@@ -427,7 +427,7 @@
         let laporanList = [];
 
         let metodePembayaran = 'TUNAI';
-        let qrisImageData = localStorage.getItem('warung_zahra_qris') || '';
+        let qrisImageData = '';
 
         let html5QrCodeKasir = null;
         let html5QrCodeStok = null;
@@ -435,8 +435,8 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const statusElem = document.getElementById('status-koneksi');
-            muatGambarQRIS();
 
+            // Status Koneksi Firebase
             db.ref('.info/connected').on('value', (snap) => {
                 if (snap.val() === true) {
                     statusElem.className = "text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1";
@@ -447,6 +447,7 @@
                 }
             });
 
+            // Sync Daftar Produk Real-time
             db.ref('produkList').on('value', (snapshot) => {
                 const data = snapshot.val();
                 produkList = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
@@ -454,10 +455,17 @@
                 muatTabelStok();
             });
 
+            // Sync Laporan Real-time
             db.ref('laporanList').on('value', (snapshot) => {
                 const data = snapshot.val();
                 laporanList = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
                 muatLaporan();
+            });
+
+            // Sync Gambar QRIS Multi-Device Real-time
+            db.ref('qrisImageData').on('value', (snapshot) => {
+                qrisImageData = snapshot.val() || '';
+                muatGambarQRIS();
             });
         });
 
@@ -567,7 +575,7 @@
             }, 800);
         }
 
-        // --- MANAJEMEN QRIS ---
+        // --- MANAJEMEN QRIS MULTI-DEVICE ---
         function pilihMetodeBayar(metode) {
             metodePembayaran = metode;
             const btnTunai = document.getElementById('btn-metode-tunai');
@@ -592,12 +600,23 @@
             const file = e.target.files[0];
             if (!file) return;
 
+            if (file.size > 1024 * 1024) {
+                alert("Ukuran foto terlalu besar! Gunakan foto di bawah 1MB.");
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = function(event) {
                 qrisImageData = event.target.result;
-                localStorage.setItem('warung_zahra_qris', qrisImageData);
-                muatGambarQRIS();
-                alert("Gambar QRIS berhasil disimpan!");
+                
+                // Simpan Gambar QRIS langsung ke Firebase Realtime Database
+                db.ref('qrisImageData').set(qrisImageData, (error) => {
+                    if (error) {
+                        alert("Gagal mengunggah QRIS: " + error.message);
+                    } else {
+                        alert("Gambar QRIS berhasil diunggah dan disinkronkan ke seluruh perangkat!");
+                    }
+                });
             };
             reader.readAsDataURL(file);
         }
