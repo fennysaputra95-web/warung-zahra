@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- HTML5-QRCode Scanner Library CDN -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Firebase SDK (Compat Version) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -385,11 +387,42 @@
                     </button>
                 </div>
 
-                <!-- INDIKATOR 1: RINGKASAN & FILTER TANGGAL -->
+                <!-- INDIKATOR 1: RINGKASAN & GRAFIK & FILTER TANGGAL -->
                 <div id="sec-lap-ringkasan" class="space-y-3">
+                    
+                    <!-- KONTENER GRAFIK OMSET PENJUALAN HARIAN -->
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2 shadow-sm">
+                        <div class="flex flex-wrap justify-between items-center border-b pb-2 gap-2">
+                            <h3 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                                <i class="fa-solid fa-chart-column text-indigo-600"></i> Grafik Omset Penjualan Harian
+                            </h3>
+                            <div class="flex items-center gap-1.5">
+                                <select id="filter-bulan-grafik" onchange="renderGrafikOmsetHarian()" class="px-2 py-1 text-[11px] bg-slate-50 border border-slate-300 rounded font-semibold text-slate-700 focus:outline-none">
+                                    <option value="0">Januari</option>
+                                    <option value="1">Februari</option>
+                                    <option value="2">Maret</option>
+                                    <option value="3">April</option>
+                                    <option value="4">Mei</option>
+                                    <option value="5">Juni</option>
+                                    <option value="6">Juli</option>
+                                    <option value="7">Agustus</option>
+                                    <option value="8">September</option>
+                                    <option value="9">Oktober</option>
+                                    <option value="10">November</option>
+                                    <option value="11">Desember</option>
+                                </select>
+                                <select id="filter-tahun-grafik" onchange="renderGrafikOmsetHarian()" class="px-2 py-1 text-[11px] bg-slate-50 border border-slate-300 rounded font-semibold text-slate-700 focus:outline-none"></select>
+                            </div>
+                        </div>
+                        
+                        <div class="relative w-full h-52 sm:h-64">
+                            <canvas id="chartOmsetHarian"></canvas>
+                        </div>
+                    </div>
+
                     <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1.5">
                         <div class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                            <i class="fa-solid fa-filter text-indigo-600"></i> Filter Rentang Tanggal
+                            <i class="fa-solid fa-filter text-indigo-600"></i> Filter Rentang Tanggal Kartu Ringkasan
                         </div>
                         <div class="flex items-center gap-1.5">
                             <input type="date" id="filter-start-date" onchange="muatLaporan()" class="flex-1 px-2 py-1 text-[11px] bg-white border border-slate-300 rounded focus:outline-none">
@@ -684,9 +717,13 @@
 
         let activeSubtabStok = 'semua';
         let activeSubtabLaporan = 'ringkasan';
+        let chartOmsetInstance = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             const statusElem = document.getElementById('status-koneksi');
+
+            // Inisialisasi Pilihan Bulan & Tahun Grafik
+            initOpsiBulanTahunGrafik();
 
             // Status Koneksi Firebase
             db.ref('.info/connected').on('value', (snap) => {
@@ -799,6 +836,10 @@
                     sec.classList.add('hidden');
                 }
             });
+
+            if (subtab === 'ringkasan') {
+                renderGrafikOmsetHarian();
+            }
         }
 
         function matikanSemuaKamera() {
@@ -1609,6 +1650,107 @@
             matikanSemuaKamera();
         }
 
+        // --- FUNGSI GRAFIK OMSET HARIAN (CHART.JS) ---
+        function initOpsiBulanTahunGrafik() {
+            const skr = new Date();
+            const bulanSkr = skr.getMonth();
+            const tahunSkr = skr.getFullYear();
+
+            const selectBulan = document.getElementById('filter-bulan-grafik');
+            const selectTahun = document.getElementById('filter-tahun-grafik');
+
+            selectBulan.value = bulanSkr;
+            selectTahun.innerHTML = '';
+
+            for (let y = tahunSkr - 2; y <= tahunSkr + 2; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.innerText = y;
+                if (y === tahunSkr) opt.selected = true;
+                selectTahun.appendChild(opt);
+            }
+        }
+
+        function renderGrafikOmsetHarian() {
+            const bulan = parseInt(document.getElementById('filter-bulan-grafik').value);
+            const tahun = parseInt(document.getElementById('filter-tahun-grafik').value);
+
+            const jumlahHari = new Date(tahun, bulan + 1, 0).getDate();
+            const labelsHari = [];
+            const dataOmset = [];
+
+            for (let d = 1; d <= jumlahHari; d++) {
+                labelsHari.push(`Tgl ${d}`);
+                dataOmset.push(0);
+            }
+
+            laporanList.forEach(tx => {
+                let dObj = tx.timestamp ? new Date(tx.timestamp) : new Date(tx.id);
+                if (isNaN(dObj.getTime())) dObj = new Date();
+
+                if (dObj.getFullYear() === tahun && dObj.getMonth() === bulan) {
+                    const tglIndex = dObj.getDate() - 1;
+                    if (tglIndex >= 0 && tglIndex < jumlahHari) {
+                        dataOmset[tglIndex] += (tx.total || 0);
+                    }
+                }
+            });
+
+            const ctx = document.getElementById('chartOmsetHarian');
+            if (!ctx) return;
+
+            if (chartOmsetInstance) {
+                chartOmsetInstance.destroy();
+            }
+
+            chartOmsetInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labelsHari,
+                    datasets: [{
+                        label: 'Omset Penjualan (Rp)',
+                        data: dataOmset,
+                        backgroundColor: 'rgba(79, 70, 229, 0.75)',
+                        borderColor: '#4f46e5',
+                        borderWidth: 1.5,
+                        borderRadius: 4,
+                        hoverBackgroundColor: '#4338ca'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' Omset: ' + formatRupiah(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 9 } }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: { size: 9 },
+                                callback: function(value) {
+                                    if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
+                                    if (value >= 1000) return (value/1000).toFixed(0) + 'k';
+                                    return value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         // --- LAPORAN & ANALISIS FAST/SLOW-MOVING ---
         function resetFilterTanggal() {
             document.getElementById('filter-start-date').value = '';
@@ -1629,6 +1771,9 @@
 
             const startDate = document.getElementById('filter-start-date').value;
             const endDate = document.getElementById('filter-end-date').value;
+
+            // Render grafik omset harian
+            renderGrafikOmsetHarian();
 
             // Filter Transaksi Penjualan
             let filteredLaporan = laporanList.filter(tx => {
