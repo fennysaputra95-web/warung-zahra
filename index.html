@@ -722,10 +722,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             const statusElem = document.getElementById('status-koneksi');
 
-            // Inisialisasi Pilihan Bulan & Tahun Grafik
             initOpsiBulanTahunGrafik();
 
-            // Status Koneksi Firebase
             db.ref('.info/connected').on('value', (snap) => {
                 if (snap.val() === true) {
                     statusElem.className = "text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1";
@@ -736,7 +734,6 @@
                 }
             });
 
-            // Sync Daftar Produk Real-time
             db.ref('produkList').on('value', (snapshot) => {
                 const data = snapshot.val();
                 produkList = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
@@ -744,28 +741,24 @@
                 muatTabelStok();
             });
 
-            // Sync Laporan Real-time
             db.ref('laporanList').on('value', (snapshot) => {
                 const data = snapshot.val();
                 laporanList = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
                 muatLaporan();
             });
 
-            // Sync Barang Masuk Real-time
             db.ref('barangMasukList').on('value', (snapshot) => {
                 const data = snapshot.val();
                 barangMasukList = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
                 muatLaporan();
             });
 
-            // Sync Pakai Sendiri Real-time
             db.ref('pakaiSendiriList').on('value', (snapshot) => {
                 const data = snapshot.val();
                 pakaiSendiriList = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
                 muatLaporan();
             });
 
-            // Sync Gambar QRIS Multi-Device Real-time
             db.ref('qrisImageData').on('value', (snapshot) => {
                 qrisImageData = snapshot.val() || '';
                 muatGambarQRIS();
@@ -785,21 +778,15 @@
             matikanSemuaKamera();
             ['kasir', 'stok', 'laporan'].forEach(tab => {
                 document.getElementById(`tab-${tab}`).classList.add('hidden');
-                
-                // Desktop navbar tab class
                 const deskBtn = document.getElementById(`tab-btn-${tab}`);
                 if (deskBtn) deskBtn.className = "flex-1 py-3 text-slate-500 hover:text-indigo-600 border-b-2 border-transparent flex items-center justify-center gap-2";
-                
-                // Mobile navbar tab class
                 const mobBtn = document.getElementById(`mob-tab-${tab}`);
                 if (mobBtn) mobBtn.className = "flex flex-col items-center text-slate-500 font-medium text-[11px]";
             });
 
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-            
             const activeDeskBtn = document.getElementById(`tab-btn-${tabName}`);
             if (activeDeskBtn) activeDeskBtn.className = "flex-1 py-3 border-b-2 border-indigo-600 text-indigo-600 font-bold flex items-center justify-center gap-2";
-            
             const activeMobBtn = document.getElementById(`mob-tab-${tabName}`);
             if (activeMobBtn) activeMobBtn.className = "flex flex-col items-center text-indigo-600 font-bold text-[11px]";
 
@@ -808,7 +795,6 @@
             if (tabName === 'laporan') muatLaporan();
         }
 
-        // --- SUB-MENU KELOLA STOK ---
         function gantiSubtabStok(subtab) {
             activeSubtabStok = subtab;
             ['semua', 'tipis', 'promo'].forEach(s => {
@@ -822,7 +808,6 @@
             muatTabelStok();
         }
 
-        // --- SUB-MENU LAPORAN ---
         function gantiSubtabLaporan(subtab) {
             activeSubtabLaporan = subtab;
             ['ringkasan', 'analisis', 'rekap', 'masuk', 'pakai', 'struk'].forEach(s => {
@@ -926,7 +911,6 @@
             }, 800);
         }
 
-        // --- MANAJEMEN QRIS MULTI-DEVICE ---
         function pilihMetodeBayar(metode) {
             metodePembayaran = metode;
             const btnTunai = document.getElementById('btn-metode-tunai');
@@ -959,7 +943,6 @@
             const reader = new FileReader();
             reader.onload = function(event) {
                 qrisImageData = event.target.result;
-                
                 db.ref('qrisImageData').set(qrisImageData, (error) => {
                     if (error) {
                         alert("Gagal mengunggah QRIS: " + error.message);
@@ -999,7 +982,6 @@
             document.getElementById('modal-qris').classList.add('hidden');
         }
 
-        // --- BARANG MASUK & PAKAI SENDIRI WITH FILTER CARI ---
         function filterDropdownModalBarang(type) {
             const query = document.getElementById(`filter-modal-${type}`).value.toLowerCase();
             const select = document.getElementById(`${type}-barang-id`);
@@ -1009,7 +991,7 @@
 
             produkList.forEach(p => {
                 if (p.name.toLowerCase().includes(query) || (p.code && p.code.toLowerCase().includes(query))) {
-                    const labelStok = type === 'masuk' ? `(Stok: ${p.stock})` : `(Stok: ${p.stock})`;
+                    const labelStok = `(Stok: ${p.stock})`;
                     const selected = Number(p.id) === Number(currentValue) ? 'selected' : '';
                     select.innerHTML += `<option value="${p.id}" ${selected}>${p.name} ${labelStok}</option>`;
                 }
@@ -1153,7 +1135,6 @@
             }
         }
 
-        // --- KASIR & KERANJANG ---
         function muatProdukKasir() {
             const query = document.getElementById('search-kasir').value.toLowerCase();
             const grid = document.getElementById('grid-produk-kasir');
@@ -1447,7 +1428,6 @@
             };
 
             laporanList.unshift(transaksiBaru);
-            
             simpanLocalProduk();
             simpanLocalLaporan();
 
@@ -1457,7 +1437,7 @@
             muatProdukKasir();
         }
 
-        // --- STRUK & PRINT ---
+        // --- FUNGSI STRUK YANG DIPERBAIKI ---
         function bukaModalStrukByTx(tx) {
             const previewModal = document.getElementById('preview-struk-modal');
             const areaPrint = document.getElementById('area-struk-print');
@@ -1526,7 +1506,6 @@
         function cetakStruk() { window.print(); }
         function tutupModalStruk() { document.getElementById('modal-struk').classList.add('hidden'); }
 
-        // --- STOK BARANG & TOTAL INVENTORI ---
         function muatTabelStok() {
             const query = document.getElementById('search-stok').value.toLowerCase();
             const body = document.getElementById('tabel-stok-body');
@@ -1550,7 +1529,6 @@
             document.getElementById('stat-stok-total-modal').innerText = formatRupiah(akumulasiModalRupiah);
             document.getElementById('stat-stok-total-jual').innerText = formatRupiah(akumulasiPotensiOmset);
 
-            // Filter Berdasarkan Subtab & Search Query
             let filtered = produkList.filter(p => 
                 p.name.toLowerCase().includes(query) || (p.code && p.code.toLowerCase().includes(query))
             );
@@ -1650,7 +1628,6 @@
             matikanSemuaKamera();
         }
 
-        // --- FUNGSI GRAFIK OMSET HARIAN (CHART.JS) ---
         function initOpsiBulanTahunGrafik() {
             const skr = new Date();
             const bulanSkr = skr.getMonth();
@@ -1751,7 +1728,6 @@
             });
         }
 
-        // --- LAPORAN & ANALISIS FAST/SLOW-MOVING ---
         function resetFilterTanggal() {
             document.getElementById('filter-start-date').value = '';
             document.getElementById('filter-end-date').value = '';
@@ -1772,10 +1748,8 @@
             const startDate = document.getElementById('filter-start-date').value;
             const endDate = document.getElementById('filter-end-date').value;
 
-            // Render grafik omset harian
             renderGrafikOmsetHarian();
 
-            // Filter Transaksi Penjualan
             let filteredLaporan = laporanList.filter(tx => {
                 let dateObj = tx.timestamp ? new Date(tx.timestamp) : new Date(tx.id);
                 if (isNaN(dateObj.getTime())) dateObj = new Date();
@@ -1786,7 +1760,6 @@
                 return true;
             });
 
-            // Filter Barang Masuk
             let filteredMasuk = barangMasukList.filter(b => {
                 let dateObj = b.timestamp ? new Date(b.timestamp) : new Date(b.id);
                 if (isNaN(dateObj.getTime())) dateObj = new Date();
@@ -1797,7 +1770,6 @@
                 return true;
             });
 
-            // Filter Pakai Sendiri
             let filteredPakai = pakaiSendiriList.filter(p => {
                 let dateObj = p.timestamp ? new Date(p.timestamp) : new Date(p.id);
                 if (isNaN(dateObj.getTime())) dateObj = new Date();
@@ -1810,7 +1782,6 @@
 
             document.getElementById('stat-total-tx').innerText = filteredLaporan.length;
 
-            // Hitung Total Restok & Pakai Sendiri
             let totalModalRestok = 0;
             filteredMasuk.forEach(b => { totalModalRestok += (b.totalModal || 0); });
             document.getElementById('stat-total-restok-modal').innerText = formatRupiah(totalModalRestok);
@@ -1819,7 +1790,6 @@
             filteredPakai.forEach(p => { totalModalPakai += (p.totalModal || 0); });
             document.getElementById('stat-total-pakai-modal').innerText = formatRupiah(totalModalPakai);
 
-            // Render List Barang Masuk
             if (filteredMasuk.length === 0) {
                 containerMasuk.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">Belum ada riwayat restok barang</p>`;
             } else {
@@ -1843,7 +1813,6 @@
                 });
             }
 
-            // Render List Pakai Sendiri
             if (filteredPakai.length === 0) {
                 containerPakai.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">Belum ada riwayat pakai sendiri</p>`;
             } else {
