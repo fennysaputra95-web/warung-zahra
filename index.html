@@ -1619,9 +1619,61 @@
             });
         }
 
+                // ==================== FUNGSI STRUK SEMBAKO / BARANG ====================
+        
+        function bukaModalStrukSembako(dataTransaksi) {
+            const previewModal = document.getElementById('preview-struk-modal');
+            const areaPrint = document.getElementById('area-struk-print');
+            
+            // PENTING: Kosongkan area cetak PPOB agar tidak ikut tercetak
+            document.getElementById('area-struk-ppob-print').innerHTML = '';
+
+            // Sesuaikan isi HTML struk sembako Anda di sini
+            let htmlStruk = `
+                <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
+                    <div style="font-size: 14px;">WARUNG ZAHRA</div>
+                    <div style="font-size: 10px; font-weight: normal;">Struk Belanja Sembako & Barang</div>
+                </div>
+                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                <div style="font-size: 10px; margin-bottom: 2px;">Waktu: ${dataTransaksi.waktu || '-'}</div>
+                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                <!-- Contoh daftar item, sesuaikan dengan variabel data Anda -->
+                <div style="font-size: 10px; margin-bottom: 4px;">
+                    ${dataTransaksi.daftarItem || 'Detail item belanja...'}
+                </div>
+                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px;">
+                    <span>TOTAL</span>
+                    <span>${formatRupiah(dataTransaksi.totalBelanja || 0)}</span>
+                </div>
+                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                <div style="text-align: center; font-size: 10px; margin-top: 6px;">
+                    *** TERIMA KASIH ***<br>Silahkan Datang Kembali
+                </div>
+            `;
+
+            previewModal.innerHTML = htmlStruk;
+            areaPrint.innerHTML = htmlStruk;
+            document.getElementById('modal-struk').classList.remove('hidden');
+        }
+
+        function cetakStruk() { 
+            window.print(); 
+        }
+
+        function tutupModalStruk() { 
+            document.getElementById('modal-struk').classList.add('hidden'); 
+        }
+
+
+        // ==================== FUNGSI STRUK TOP UP / PPOB ====================
+
         function bukaModalStrukPpobByTx(tx) {
             const previewModal = document.getElementById('preview-struk-ppob-modal');
             const areaPrint = document.getElementById('area-struk-ppob-print');
+
+            // PENTING: Kosongkan area cetak sembako agar tidak ikut tercetak
+            document.getElementById('area-struk-print').innerHTML = '';
 
             let htmlStruk = `
                 <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
@@ -1660,14 +1712,24 @@
             document.getElementById('modal-struk-ppob').classList.remove('hidden');
         }
 
-        function bukaModalStrukPpob(tx) { bukaModalStrukPpobByTx(tx); }
+        function bukaModalStrukPpob(tx) { 
+            bukaModalStrukPpobByTx(tx); 
+        }
+
         function cetakStrukPpobUlang(id) {
             const tx = laporanPpobList.find(t => Number(t.id) === Number(id));
             if (tx) bukaModalStrukPpobByTx(tx);
         }
-        function cetakStrukPpob() { window.print(); }
-        function tutupModalStrukPpob() { document.getElementById('modal-struk-ppob').classList.add('hidden'); }
 
+        function cetakStrukPpob() { 
+            window.print(); 
+        }
+
+        function tutupModalStrukPpob() { 
+            document.getElementById('modal-struk-ppob').classList.add('hidden'); 
+        }
+
+        
         function filterDropdownModalBarang(type) {
             const filterEl = document.getElementById(`filter-modal-${type}`);
             const select = document.getElementById(`${type}-barang-id`);
