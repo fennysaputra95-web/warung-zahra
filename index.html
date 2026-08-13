@@ -2,7 +2,6 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <!-- Diperbaiki: Mengizinkan user melakukan zoom untuk aksesibilitas yang lebih baik -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warung Zahra - Kasir & Stok Multi-Device</title>
 
@@ -33,7 +32,6 @@
 
         @media print {
             body { background: white !important; color: black !important; margin: 0; padding: 0; }
-            /* Diperbaiki: Menyembunyikan elemen dengan class .no-print dan .modal-pembungkus secara universal */
             .no-print, header, nav, main, .modal-pembungkus { display: none !important; }
             #area-struk-print, #area-struk-ppob-print { 
                 display: block !important;
@@ -209,7 +207,6 @@
                                 </label>
                             </div>
                         </div>
-
                     </div>
 
                     <button onclick="prosesTransaksi()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 sm:py-3 rounded-xl shadow-md shadow-emerald-200 flex items-center justify-center gap-2 text-xs sm:text-sm transition">
@@ -581,8 +578,8 @@
         </section>
 
     </main>
-    
-    <!-- ==================== MODAL PENGATURAN BIAYA ADMIN TERPISAH ==================== -->
+
+       <!-- ==================== MODAL PENGATURAN BIAYA ADMIN TERPISAH ==================== -->
     <div id="modal-setting-admin" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-3 sm:p-4 no-print">
         <div class="bg-white w-full max-w-lg rounded-2xl p-4 sm:p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-2">
@@ -903,7 +900,8 @@
 
     <div id="area-struk-print" class="hidden"></div>
     <div id="area-struk-ppob-print" class="hidden"></div>
-
+    
+    
         <!-- ==================== JAVASCRIPT & FIREBASE INTEGRATION (PERBAIKAN & TERHUBUNG) ==================== -->
     <script>
         const firebaseConfig = {
@@ -1664,15 +1662,13 @@
         function tutupModalStruk() { 
             document.getElementById('modal-struk').classList.add('hidden'); 
         }
-
-
+    
         // ==================== FUNGSI STRUK TOP UP / PPOB ====================
 
         function bukaModalStrukPpobByTx(tx) {
             const previewModal = document.getElementById('preview-struk-ppob-modal');
             const areaPrint = document.getElementById('area-struk-ppob-print');
 
-            // PENTING: Kosongkan area cetak sembako agar tidak ikut tercetak
             document.getElementById('area-struk-print').innerHTML = '';
 
             let htmlStruk = `
@@ -1729,7 +1725,6 @@
             document.getElementById('modal-struk-ppob').classList.add('hidden'); 
         }
 
-        
         function filterDropdownModalBarang(type) {
             const filterEl = document.getElementById(`filter-modal-${type}`);
             const select = document.getElementById(`${type}-barang-id`);
@@ -1743,7 +1738,7 @@
             produkList.forEach(p => {
                 if (p.name.toLowerCase().includes(query) || (p.code && p.code.toLowerCase().includes(query))) {
                     const labelStok = `(Stok: ${p.stock})`;
-                    const selected = Number(p.id) === Number(currentValue) ? 'selected' : '';
+                    const selected = String(p.id) === String(currentValue) ? 'selected' : '';
                     select.innerHTML += `<option value="${p.id}" ${selected}>${p.name} ${labelStok}</option>`;
                 }
             });
@@ -1760,7 +1755,7 @@
 
         function updateModalMasukInfo() {
             const id = document.getElementById('masuk-barang-id').value;
-            const p = produkList.find(x => Number(x.id) === Number(id));
+            const p = produkList.find(x => String(x.id) === String(id));
             if (p) {
                 document.getElementById('masuk-cost').value = p.cost || '';
             }
@@ -1777,7 +1772,7 @@
             const newCost = Number(document.getElementById('masuk-cost').value);
             const catatan = document.getElementById('masuk-catatan').value.trim() || 'Restok Barang';
 
-            const produk = produkList.find(p => Number(p.id) === Number(id));
+            const produk = produkList.find(p => String(p.id) === String(id));
             if (!produk) {
                 alert("Pilih barang terlebih dahulu!");
                 return;
@@ -1822,7 +1817,7 @@
 
         function updateModalPakaiInfo() {
             const id = document.getElementById('pakai-barang-id').value;
-            const p = produkList.find(x => Number(x.id) === Number(id));
+            const p = produkList.find(x => String(x.id) === String(id));
             document.getElementById('pakai-stok-tersedia').value = p ? `${p.stock} pcs` : '-';
         }
 
@@ -1836,7 +1831,7 @@
             const qty = Number(document.getElementById('pakai-qty').value);
             const catatan = document.getElementById('pakai-catatan').value.trim() || 'Pakai Sendiri / Konsumsi';
 
-            const produk = produkList.find(p => Number(p.id) === Number(id));
+            const produk = produkList.find(p => String(p.id) === String(id));
             if (!produk) {
                 alert("Pilih barang terlebih dahulu!");
                 return;
@@ -1909,17 +1904,18 @@
         }
 
         function tambahKeKeranjang(id) {
-            const produk = produkList.find(p => Number(p.id) === Number(id));
+            const targetId = String(id);
+            const produk = produkList.find(p => String(p.id) === targetId);
             if (!produk) return;
 
-            if (produk.stock <= 0) {
+            if (Number(produk.stock) <= 0) {
                 alert("Stok barang ini habis!");
                 return;
             }
 
-            const itemInCart = keranjang.find(k => k.id === id);
+            const itemInCart = keranjang.find(k => String(k.id) === targetId);
             if (itemInCart) {
-                if (itemInCart.qty >= produk.stock) {
+                if (itemInCart.qty >= Number(produk.stock)) {
                     alert("Jumlah melebihi stok yang tersedia!");
                     return;
                 }
@@ -2026,19 +2022,23 @@
         }
 
         function ubahQty(id, delta) {
-            const item = keranjang.find(k => k.id === id);
-            const produk = produkList.find(p => p.id === id);
+            const targetId = String(id);
+            const item = keranjang.find(k => String(k.id) === targetId);
+            const produk = produkList.find(p => String(p.id) === targetId);
+            
             if (!item || !produk) return;
 
             const newQty = item.qty + delta;
+
             if (newQty <= 0) {
-                keranjang = keranjang.filter(k => k.id !== id);
-            } else if (newQty > produk.stock) {
-                alert("Jumlah melebihi stok yang tersedia!");
+                keranjang = keranjang.filter(k => String(k.id) !== targetId);
+            } else if (newQty > Number(produk.stock)) {
+                alert(`Stok ${produk.name} tidak mencukupi! Stok saat ini: ${produk.stock}`);
                 return;
             } else {
                 item.qty = newQty;
             }
+            
             muatKeranjang();
         }
 
@@ -2125,7 +2125,7 @@
             }
 
             for (let item of keranjang) {
-                const prod = produkList.find(p => p.id === item.id);
+                const prod = produkList.find(p => String(p.id) === String(item.id));
                 if (prod) {
                     if (item.qty > prod.stock) {
                         alert(`Stok ${prod.name} tidak mencukupi! Sisa stok: ${prod.stock}`);
@@ -2253,9 +2253,9 @@
             }
 
             if (id) {
-                const idx = produkList.findIndex(p => Number(p.id) === Number(id));
+                const idx = produkList.findIndex(p => String(p.id) === String(id));
                 if (idx !== -1) {
-                    produkList[idx] = { id: Number(id), code, name, cost, price, stock, minQty, hargaPaket };
+                    produkList[idx] = { id: id, code, name, cost, price, stock, minQty, hargaPaket };
                 }
             } else {
                 const newId = produkList.length > 0 ? Math.max(...produkList.map(p => Number(p.id) || 0)) + 1 : 1;
@@ -2283,7 +2283,7 @@
         }
 
         function editBarang(id) {
-            const p = produkList.find(x => Number(x.id) === Number(id));
+            const p = produkList.find(x => String(x.id) === String(id));
             if (!p) return;
 
             document.getElementById('barang-id').value = p.id;
@@ -2300,7 +2300,7 @@
 
         function hapusBarang(id) {
             if (confirm("Hapus barang ini dari daftar master?")) {
-                produkList = produkList.filter(p => Number(p.id) !== Number(id));
+                produkList = produkList.filter(p => String(p.id) !== String(id));
                 simpanLocalProduk();
                 muatTabelStok();
                 muatProdukKasir();
@@ -2368,8 +2368,8 @@
                         </span>
                     </td>
                     <td class="p-2 text-center space-x-1">
-                        <button onclick="editBarang(${p.id})" class="text-indigo-600 hover:text-indigo-900 font-semibold px-1"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="hapusBarang(${p.id})" class="text-red-500 hover:text-red-700 font-semibold px-1"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="editBarang('${p.id}')" class="text-indigo-600 hover:text-indigo-900 font-semibold px-1"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="hapusBarang('${p.id}')" class="text-red-500 hover:text-red-700 font-semibold px-1"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -2593,7 +2593,7 @@
             const arr = Object.values(rekapMap).sort((a, b) => b.totalOmset - a.totalOmset);
 
             if (arr.length === 0) {
-                container.innerHTML = `<p class="text-center text-slate-400 py-4">Belum ada rekap item terjual</p>`;
+                container.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Belum ada rekap item terjual</p>`;
                 return;
             }
 
