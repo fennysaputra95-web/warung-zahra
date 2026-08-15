@@ -1665,16 +1665,86 @@
     
         // ==================== FUNGSI STRUK TOP UP / PPOB ====================
 
-        function bukaModalStrukPpobByTx(tx) {
-            const previewModal = document.getElementById('preview-struk-ppob-modal');
-            const areaPrint = document.getElementById('area-struk-ppob-print');
+        // BAGIAN 4 (Posisikan di bagian akhir kode JavaScript Anda)
 
-            document.getElementById('area-struk-print').innerHTML = '';
+        function bukaModalStruk(tx) {
+            const preview = document.getElementById('preview-struk-modal');
+            const areaPrint = document.getElementById('area-struk-print');
+            
+            const areaPpobPrint = document.getElementById('area-struk-ppob-print');
+            if (areaPpobPrint) areaPpobPrint.innerHTML = '';
+            const previewPpob = document.getElementById('preview-struk-ppob-modal');
+            if (previewPpob) previewPpob.innerHTML = '';
+
+            if (!preview || !areaPrint) return;
+
+            let itemHtml = '';
+            tx.items.forEach(i => {
+                const det = hitungDetailItem(i);
+                itemHtml += `
+                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                        <span>${i.name} (${i.qty}x)</span>
+                        <span>${formatRupiah(det.hargaAkhir)}</span>
+                    </div>
+                `;
+            });
 
             let htmlStruk = `
                 <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
                     <div style="font-size: 14px;">WARUNG ZAHRA</div>
-                    <div style="font-size: 10px; font-weight: normal;">Struk Top Up & Transfer Digital</div>
+                    <div style="font-size: 10px; font-weight: normal;">Jl. Sembako & Kebutuhan Harian</div>
+                </div>
+                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                <div style="font-size: 10px; margin-bottom: 2px;">Waktu: ${tx.waktu}</div>
+                <div style="font-size: 10px; margin-bottom: 2px;">Metode: ${tx.metode}</div>
+                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                <div style="margin-bottom: 6px;">${itemHtml}</div>
+                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                    <span>Subtotal</span>
+                    <span>${formatRupiah(tx.subtotalNormal)}</span>
+                </div>
+                ${tx.potongan > 0 ? `
+                <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                    <span>Potongan Paket</span>
+                    <span>- ${formatRupiah(tx.potongan)}</span>
+                </div>` : ''}
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 2px;">
+                    <span>TOTAL</span>
+                    <span>${formatRupiah(tx.total)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 2px;">
+                    <span>Bayar (${tx.metode})</span>
+                    <span>${formatRupiah(tx.tunai)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                    <span>Kembalian</span>
+                    <span>${formatRupiah(tx.kembalian)}</span>
+                </div>
+                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
+                <div style="text-align: center; font-size: 10px; margin-top: 6px;">
+                    *** TERIMA KASIH ***<br>Barang yang sudah dibeli tidak dapat ditukar
+                </div>
+            `;
+
+            preview.innerHTML = htmlStruk;
+            areaPrint.innerHTML = htmlStruk;
+            document.getElementById('modal-struk').classList.remove('hidden');
+        }
+
+        function bukaModalStrukPpobByTx(tx) {
+            const previewModal = document.getElementById('preview-struk-ppob-modal');
+            const areaPrint = document.getElementById('area-struk-ppob-print');
+
+            const areaSembakoPrint = document.getElementById('area-struk-print');
+            if (areaSembakoPrint) areaSembakoPrint.innerHTML = '';
+            const previewSembako = document.getElementById('preview-struk-modal');
+            if (previewSembako) previewSembako.innerHTML = '';
+
+            let htmlStruk = `
+                <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
+                    <div style="font-size: 14px;">WARUNG ZAHRA</div>
+                    <div style="font-size: 10px; font-weight: normal;">Top Up & Transfer Digital</div>
                 </div>
                 <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
                 <div style="font-size: 10px; margin-bottom: 2px;">ID Transaksi: <b>${tx.idTransaksi || '-'}</b></div>
@@ -1707,6 +1777,7 @@
             areaPrint.innerHTML = htmlStruk;
             document.getElementById('modal-struk-ppob').classList.remove('hidden');
         }
+
 
         function bukaModalStrukPpob(tx) { 
             bukaModalStrukPpobByTx(tx); 
@@ -2183,7 +2254,7 @@
             let htmlStruk = `
                 <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
                     <div style="font-size: 14px;">WARUNG ZAHRA</div>
-                    <div style="font-size: 10px; font-weight: normal;">Jl. Sembako & Kebutuhan Harian</div>
+                    <div style="font-size: 10px; font-weight: normal;">Sembako & Kebutuhan Harian</div>
                 </div>
                 <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
                 <div style="font-size: 10px; margin-bottom: 2px;">Waktu: ${tx.waktu}</div>
@@ -2214,7 +2285,7 @@
                 </div>
                 <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
                 <div style="text-align: center; font-size: 10px; margin-top: 6px;">
-                    *** TERIMA KASIH ***<br>Barang yang sudah dibeli tidak dapat ditukar
+                    *** TERIMA KASIH ***<br>Silakan datang kembali
                 </div>
             `;
 
