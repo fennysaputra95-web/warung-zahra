@@ -30,40 +30,21 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-@media print {
-    /* Sembunyikan seluruh isi halaman secara default saat tombol cetak ditekan */
-    body * {
-        visibility: hidden;
-    }
-    
-    /* Hanya tampilkan area sembako jika ada isinya dan tidak kosong */
-    #area-struk-print:not(:empty), 
-    #area-struk-print:not(:empty) * {
-        visibility: visible;
-    }
-
-    #area-struk-print {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-    }
-
-    /* Hanya tampilkan area PPOB jika ada isinya dan tidak kosong */
-    #area-struk-ppob-print:not(:empty), 
-    #area-struk-ppob-print:not(:empty) * {
-        visibility: visible;
-    }
-
-    #area-struk-ppob-print {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-    }
-}
-
-        
+        @media print {
+            body { background: white !important; color: black !important; margin: 0; padding: 0; }
+            .no-print, header, nav, main, .modal-pembungkus { display: none !important; }
+            #area-struk-print, #area-struk-ppob-print { 
+                display: block !important;
+                width: 100% !important;
+                max-width: 58mm;
+                margin: 0 auto;
+                padding: 5mm 2mm;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 11px;
+                line-height: 1.2;
+                color: #000 !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-24 md:pb-6 select-none">
@@ -1684,81 +1665,11 @@
     
         // ==================== FUNGSI STRUK TOP UP / PPOB ====================
 
-        // BAGIAN 4 (Posisikan di bagian akhir kode JavaScript Anda)
-
-        function bukaModalStruk(tx) {
-            const preview = document.getElementById('preview-struk-modal');
-            const areaPrint = document.getElementById('area-struk-print');
-            
-            const areaPpobPrint = document.getElementById('area-struk-ppob-print');
-            if (areaPpobPrint) areaPpobPrint.innerHTML = '';
-            const previewPpob = document.getElementById('preview-struk-ppob-modal');
-            if (previewPpob) previewPpob.innerHTML = '';
-
-            if (!preview || !areaPrint) return;
-
-            let itemHtml = '';
-            tx.items.forEach(i => {
-                const det = hitungDetailItem(i);
-                itemHtml += `
-                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
-                        <span>${i.name} (${i.qty}x)</span>
-                        <span>${formatRupiah(det.hargaAkhir)}</span>
-                    </div>
-                `;
-            });
-
-            let htmlStruk = `
-                <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
-                    <div style="font-size: 14px;">WARUNG ZAHRA</div>
-                    <div style="font-size: 10px; font-weight: normal;">Jl. Sembako & Kebutuhan Harian</div>
-                </div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="font-size: 10px; margin-bottom: 2px;">Waktu: ${tx.waktu}</div>
-                <div style="font-size: 10px; margin-bottom: 2px;">Metode: ${tx.metode}</div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="margin-bottom: 6px;">${itemHtml}</div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px;">
-                    <span>Subtotal</span>
-                    <span>${formatRupiah(tx.subtotalNormal)}</span>
-                </div>
-                ${tx.potongan > 0 ? `
-                <div style="display: flex; justify-content: space-between; font-size: 11px;">
-                    <span>Potongan Paket</span>
-                    <span>- ${formatRupiah(tx.potongan)}</span>
-                </div>` : ''}
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 2px;">
-                    <span>TOTAL</span>
-                    <span>${formatRupiah(tx.total)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 2px;">
-                    <span>Bayar (${tx.metode})</span>
-                    <span>${formatRupiah(tx.tunai)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px;">
-                    <span>Kembalian</span>
-                    <span>${formatRupiah(tx.kembalian)}</span>
-                </div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="text-align: center; font-size: 10px; margin-top: 6px;">
-                    *** TERIMA KASIH ***<br>Barang yang sudah dibeli tidak dapat ditukar
-                </div>
-            `;
-
-            preview.innerHTML = htmlStruk;
-            areaPrint.innerHTML = htmlStruk;
-            document.getElementById('modal-struk').classList.remove('hidden');
-        }
-
         function bukaModalStrukPpobByTx(tx) {
             const previewModal = document.getElementById('preview-struk-ppob-modal');
             const areaPrint = document.getElementById('area-struk-ppob-print');
 
-            const areaSembakoPrint = document.getElementById('area-struk-print');
-            if (areaSembakoPrint) areaSembakoPrint.innerHTML = '';
-            const previewSembako = document.getElementById('preview-struk-modal');
-            if (previewSembako) previewSembako.innerHTML = '';
+            document.getElementById('area-struk-print').innerHTML = '';
 
             let htmlStruk = `
                 <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
@@ -1796,7 +1707,6 @@
             areaPrint.innerHTML = htmlStruk;
             document.getElementById('modal-struk-ppob').classList.remove('hidden');
         }
-
 
         function bukaModalStrukPpob(tx) { 
             bukaModalStrukPpobByTx(tx); 
@@ -2304,7 +2214,7 @@
                 </div>
                 <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
                 <div style="text-align: center; font-size: 10px; margin-top: 6px;">
-                    *** TERIMA KASIH ***<br>Silakan datang kembali
+                    *** TERIMA KASIH ***<br>Sudah berbelanja, Semoga harimu menyenangkan
                 </div>
             `;
 
