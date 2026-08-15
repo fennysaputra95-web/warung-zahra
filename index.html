@@ -1619,7 +1619,7 @@
         }
 
                 // ==================== FUNGSI STRUK SEMBAKO / BARANG ====================
-       
+
         function bukaModalStruk(tx) {
             const preview = document.getElementById('preview-struk-modal');
             if (!preview) return;
@@ -1628,7 +1628,7 @@
             tx.items.forEach(i => {
                 const det = hitungDetailItem(i);
                 itemHtml += `
-                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px;">
                         <span>${i.name} (${i.qty}x)</span>
                         <span>${formatRupiah(det.hargaAkhir)}</span>
                     </div>
@@ -1636,39 +1636,39 @@
             });
 
             let htmlStruk = `
-                <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
-                    <div style="font-size: 14px;">WARUNG ZAHRA</div>
-                    <div style="font-size: 10px; font-weight: normal;">Jl. Sembako & Kebutuhan Harian</div>
+                <div style="text-align: center; font-weight: bold; margin-bottom: 8px;">
+                    <div style="font-size: 16px;">WARUNG ZAHRA</div>
+                    <div style="font-size: 12px; font-weight: normal;">Jl. Sembako & Kebutuhan Harian</div>
                 </div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="font-size: 10px; margin-bottom: 2px;">Waktu: ${tx.waktu}</div>
-                <div style="font-size: 10px; margin-bottom: 2px;">Metode: ${tx.metode}</div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="margin-bottom: 6px;">${itemHtml}</div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+                <div style="font-size: 12px; margin-bottom: 3px;">Waktu: ${tx.waktu}</div>
+                <div style="font-size: 12px; margin-bottom: 3px;">Metode: ${tx.metode}</div>
+                <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+                <div style="margin-bottom: 8px;">${itemHtml}</div>
+                <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
                     <span>Subtotal</span>
                     <span>${formatRupiah(tx.subtotalNormal)}</span>
                 </div>
                 ${tx.potongan > 0 ? `
-                <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
                     <span>Potongan Paket</span>
                     <span>- ${formatRupiah(tx.potongan)}</span>
                 </div>` : ''}
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 2px;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; margin-top: 4px;">
                     <span>TOTAL</span>
                     <span>${formatRupiah(tx.total)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 2px;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 4px;">
                     <span>Bayar (${tx.metode})</span>
                     <span>${formatRupiah(tx.tunai)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
                     <span>Kembalian</span>
                     <span>${formatRupiah(tx.kembalian)}</span>
                 </div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="text-align: center; font-size: 10px; margin-top: 6px;">
+                <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+                <div style="text-align: center; font-size: 12px; margin-top: 8px;">
                     *** TERIMA KASIH ***<br>Silakan datang kembali
                 </div>
             `;
@@ -1693,33 +1693,33 @@
             if (!previewModal) return;
 
             let htmlStruk = `
-                <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
-                    <div style="font-size: 14px;">WARUNG ZAHRA</div>
-                    <div style="font-size: 10px; font-weight: normal;">Top Up & Transfer Digital</div>
+                <div style="text-align: center; font-weight: bold; margin-bottom: 8px;">
+                    <div style="font-size: 16px;">WARUNG ZAHRA</div>
+                    <div style="font-size: 12px; font-weight: normal;">Top Up & Transfer Digital</div>
                 </div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="font-size: 10px; margin-bottom: 2px;">ID Transaksi: <b>${tx.idTransaksi || '-'}</b></div>
-                <div style="font-size: 10px; margin-bottom: 2px;">Waktu: ${tx.waktu}</div>
-                <div style="font-size: 10px; margin-bottom: 2px;">Layanan : <b>${tx.jenis}</b></div>
-                <div style="font-size: 10px; margin-bottom: 2px;">Nama    : <b>${tx.nama || '-'}</b></div>
-                <div style="font-size: 10px; margin-bottom: 6px;">Tujuan  : <b>${tx.tujuan}</b></div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+                <div style="font-size: 12px; margin-bottom: 3px;">ID Transaksi: <b>${tx.idTransaksi || '-'}</b></div>
+                <div style="font-size: 12px; margin-bottom: 3px;">Waktu: ${tx.waktu}</div>
+                <div style="font-size: 12px; margin-bottom: 3px;">Layanan : <b>${tx.jenis}</b></div>
+                <div style="font-size: 12px; margin-bottom: 3px;">Nama    : <b>${tx.nama || '-'}</b></div>
+                <div style="font-size: 12px; margin-bottom: 8px;">Tujuan  : <b>${tx.tujuan}</b></div>
+                <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
                     <span>Nominal Saldo</span>
                     <span>${formatRupiah(tx.nominalModal)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px;">
                     <span>Biaya Admin</span>
                     <span>${formatRupiah(tx.biayaAdmin)}</span>
                 </div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px;">
+                <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;">
                     <span>TOTAL TAGIHAN</span>
                     <span>${formatRupiah(tx.totalTagihan)}</span>
                 </div>
-                ${tx.catatan ? `<div style="font-size: 10px; margin-top: 4px;">Catatan: ${tx.catatan}</div>` : ''}
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="text-align: center; font-size: 10px; margin-top: 6px;">
+                ${tx.catatan ? `<div style="font-size: 12px; margin-top: 6px;">Catatan: ${tx.catatan}</div>` : ''}
+                <div style="border-bottom: 1px dashed #000; margin: 8px 0;"></div>
+                <div style="text-align: center; font-size: 12px; margin-top: 8px;">
                     *** TERIMA KASIH ***<br>Layanan Aman & Terpercaya
                 </div>
             `;
