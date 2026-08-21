@@ -427,9 +427,7 @@
                 <div class="flex flex-wrap justify-between items-center border-b pb-2 gap-2">
                     <h2 class="font-bold text-slate-800 text-xs sm:text-sm">Laporan Penjualan Barang Sembako</h2>
                     <div class="flex gap-2">
-                        <button onclick="exportLaporanCSV()" class="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-700 font-medium flex items-center gap-1">
-                            <i class="fa-solid fa-file-csv"></i> CSV
-                        </button>
+                       
                         <button onclick="hapusSemuaLaporan()" class="text-[11px] text-red-500 hover:underline">Hapus All</button>
                     </div>
                 </div>
@@ -2693,26 +2691,7 @@ function filterDropdownModalBarang(type) {
                 }
             });
         }
-
-        function exportLaporanCSV() {
-            if (laporanList.length === 0) {
-                alert("Tidak ada data laporan untuk diexport!");
-                return;
-            }
-
-            let csvContent = "data:text/csv;charset=utf-8,ID Struk,Waktu,Metode,Total Omset,Total Laba\r\n";
-            laporanList.forEach(t => {
-                csvContent += `"${t.id}","${t.waktu}","${t.metode}",${t.total},${t.margin}\r\n`;
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `laporan_warung_zahra_${Date.now()}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+       
     </script>
 
     <div id="area-struk-print" style="display: none;"></div>
