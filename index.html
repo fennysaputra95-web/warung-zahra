@@ -30,41 +30,23 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* CSS bawaan kamu tetap dipertahankan */
-    body {
-        font-family: 'Inter', sans-serif;
+        @media print {
+    body * {
+        visibility: hidden;
     }
-
-    /* GANTI / TAMBAHKAN BAGIAN MEDIA PRINT INI SAJA */
-    @media print {
-        body * {
-            visibility: hidden !important;
-        }
-
-        #area-struk-print, #area-struk-print * {
-            visibility: visible !important;
-        }
-
-        #area-struk-print {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            max-width: 58mm; /* Ubah ke 80mm jika pakai printer kertas lebar */
-            margin: 0 !important;
-            padding: 0 !important;
-            display: block !important;
-            color: #000 !important;
-            background: #fff !important;
-        }
-
-        @page {
-            margin: 0;
-            size: auto;
-        }
+    #area-struk-print, #area-struk-print * {
+        visibility: visible;
     }
+    #area-struk-print {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: block !important;
+    }
+}
+
     </style>
-    
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-24 md:pb-6 select-none">
 
@@ -1764,28 +1746,25 @@
             document.getElementById('modal-struk-ppob').classList.add('hidden'); 
         }
 
-// KODE BARU (OPTIMAL)
-function filterDropdownModalBarang(type) {
-    const queryEl = document.getElementById(type === 'restok' ? 'search-modal-restok' : 'search-modal-pakai');
-    const select = document.getElementById(type === 'restok' ? 'restok-barang-id' : 'pakai-barang-id');
-    if (!select) return;
+        function filterDropdownModalBarang(type) {
+            const filterEl = document.getElementById(`filter-modal-${type}`);
+            const select = document.getElementById(`${type}-barang-id`);
+            if (!filterEl || !select) return;
 
-    const query = queryEl ? queryEl.value.toLowerCase() : '';
-    const currentValue = select.value;
+            const query = filterEl.value.toLowerCase();
+            const currentValue = select.value;
 
-    let optionsHtml = '<option value="">-- Pilih Barang --</option>'; // Tampung dulu di string
+            select.innerHTML = '<option value="">-- Pilih Barang --</option>';
 
-    produkList.forEach(p => {
-        if (p.name.toLowerCase().includes(query) || (p.code && p.code.toLowerCase().includes(query))) {
-            const labelStok = `(Stok: ${p.stock})`;
-            const selected = String(p.id) === String(currentValue) ? 'selected' : '';
-            optionsHtml += `<option value="${p.id}" ${selected}>${p.name} ${labelStok}</option>`;
+            produkList.forEach(p => {
+                if (p.name.toLowerCase().includes(query) || (p.code && p.code.toLowerCase().includes(query))) {
+                    const labelStok = `(Stok: ${p.stock})`;
+                    const selected = String(p.id) === String(currentValue) ? 'selected' : '';
+                    select.innerHTML += `<option value="${p.id}" ${selected}>${p.name} ${labelStok}</option>`;
+                }
+            });
         }
-    });
 
-    select.innerHTML = optionsHtml; // ✅ Assign ke DOM cukup 1 kali saja
-}
-       
         function bukaModalBarangMasuk() {
             document.getElementById('filter-modal-masuk').value = '';
             filterDropdownModalBarang('masuk');
@@ -1977,7 +1956,6 @@ function filterDropdownModalBarang(type) {
             muatKeranjang();
         }
 
-        
         function tambahBarangLewatKode(code) {
             const produk = produkList.find(p => p.code && p.code.trim() === code.trim());
             if (produk) {
@@ -1985,144 +1963,6 @@ function filterDropdownModalBarang(type) {
                 return true;
             }
             return false;
-        }
-
-        // ==========================================
-        // PASTE FUNGSI PPOB DI SINI
-        // ==========================================
-        function tambahLaporanPpob(e) {
-            e.preventDefault();
-            const jenis = document.getElementById('ppob-jenis').value;
-            const nomor = document.getElementById('ppob-nomor').value.trim();
-            
-            const nominal = Number(document.getElementById('ppob-nominal').value) || 0;
-            const hargaBeli = Number(document.getElementById('ppob-harga-beli').value) || 0;
-            const hargaJual = Number(document.getElementById('ppob-harga-jual').value) || 0;
-            const metode = document.getElementById('ppob-metode').value;
-
-            if (!nomor) {
-                alert("Nomor tujuan/ID Pelanggan wajib diisi!");
-                return;
-            }
-
-            const laba = hargaJual - hargaBeli;
-            const sekarang = new Date();
-            
-            const dataPpob = {
-                id: Date.now(),
-                jenis,
-                nomor,
-                nominal,
-                hargaBeli,
-                hargaJual,
-                laba,
-                metode,
-                waktu: sekarang.toLocaleString('id-ID'),
-                timestamp: sekarang.toISOString()
-            };
-
-            ppobList.unshift(dataPpob);
-            simpanLocalPpob();
-            muatTabelPpob();
-
-            // Reset Form PPOB
-            document.getElementById('ppob-nomor').value = '';
-            document.getElementById('ppob-nominal').value = '';
-            document.getElementById('ppob-harga-beli').value = '';
-            document.getElementById('ppob-harga-jual').value = '';
-
-            bukaModalStrukPpob(dataPpob);
-        }
-
-        function bukaModalStrukPpob(tx) {
-            const preview = document.getElementById('preview-struk-modal');
-            const areaPrint = document.getElementById('area-struk-print');
-            if (!preview || !areaPrint) return;
-
-            let htmlStruk = `
-                <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">
-                    <div style="font-size: 14px;">WARUNG ZAHRA</div>
-                    <div style="font-size: 10px; font-weight: normal;">Layanan Pembayaran & PPOB</div>
-                </div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="font-size: 10px; margin-bottom: 2px;">Waktu: ${tx.waktu}</div>
-                <div style="font-size: 10px; margin-bottom: 2px;">Jenis: <b>${tx.jenis}</b></div>
-                <div style="font-size: 10px; margin-bottom: 2px;">No. Tujuan: <b>${tx.nomor}</b></div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                ${tx.nominal > 0 ? `
-                <div style="display: flex; justify-content: space-between; font-size: 11px;">
-                    <span>Nominal</span>
-                    <span>${formatRupiah(tx.nominal)}</span>
-                </div>` : ''}
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 2px;">
-                    <span>TOTAL BAYAR</span>
-                    <span>${formatRupiah(tx.hargaJual)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 2px;">
-                    <span>Metode</span>
-                    <span>${tx.metode}</span>
-                </div>
-                <div style="border-bottom: 1px dashed #000; margin: 6px 0;"></div>
-                <div style="text-align: center; font-size: 10px; margin-top: 6px;">
-                    *** TRANSAKSI BERHASIL ***<br>Terima kasih atas kepercayaan Anda
-                </div>
-            `;
-
-            preview.innerHTML = htmlStruk;
-            areaPrint.innerHTML = htmlStruk;
-            document.getElementById('modal-struk').classList.remove('hidden');
-        }
-
-        function muatTabelPpob() {
-            const tbody = document.getElementById('tabel-ppob-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            if (ppobList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-slate-400 py-6">Belum ada transaksi PPOB</td></tr>`;
-                return;
-            }
-
-            let totalOmsetPpob = 0;
-            let totalLabaPpob = 0;
-
-            ppobList.forEach(p => {
-                totalOmsetPpob += Number(p.hargaJual || 0);
-                totalLabaPpob += Number(p.laba || 0);
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 text-xs";
-                tr.innerHTML = `
-                    <td class="p-2 font-semibold text-slate-800">${p.jenis}</td>
-                    <td class="p-2 text-slate-600">${p.nomor}</td>
-                    <td class="p-2">${formatRupiah(p.hargaBeli)}</td>
-                    <td class="p-2 font-semibold text-indigo-600">${formatRupiah(p.hargaJual)}</td>
-                    <td class="p-2 font-semibold text-emerald-600">${formatRupiah(p.laba)}</td>
-                    <td class="p-2 text-center space-x-1">
-                        <button onclick="bukaModalStrukPpobByTx('${p.id}')" class="text-indigo-600 hover:text-indigo-900 font-semibold px-1"><i class="fa-solid fa-print"></i></button>
-                        <button onclick="hapusPpob('${p.id}')" class="text-red-500 hover:text-red-700 font-semibold px-1"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            const elOmset = document.getElementById('stat-ppob-total-omset');
-            const elLaba = document.getElementById('stat-ppob-total-laba');
-            if (elOmset) elOmset.innerText = formatRupiah(totalOmsetPpob);
-            if (elLaba) elLaba.innerText = formatRupiah(totalLabaPpob);
-        }
-
-        function bukaModalStrukPpobByTx(id) {
-            const tx = ppobList.find(p => Number(p.id) === Number(id));
-            if (tx) bukaModalStrukPpob(tx);
-        }
-
-        function hapusPpob(id) {
-            if (confirm("Hapus transaksi PPOB ini dari catatan?")) {
-                ppobList = ppobList.filter(p => Number(p.id) !== Number(id));
-                simpanLocalPpob();
-                muatTabelPpob();
-            }
         }
 
         function hitungDetailItem(item) {
