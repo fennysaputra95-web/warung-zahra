@@ -2128,63 +2128,60 @@
             }
         }
 
+        function prosesTransaksi() {
+            if (keranjang.length === 0) {
+                alert("Keranjang masih kosong!");
+                return;
+            }
 
-async function prosesTransaksi() {
-    // 1. Validasi Keranjang
-    if (!keranjang || keranjang.length === 0) {
-        alert("Keranjang belanja masih kosong!");
-        return;
-    }
+            const res = getTotalHargaFinal();
+            const inputTunai = document.getElementById('input-tunai');
+            const tunai = inputTunai ? Number(inputTunai.value) || 0 : 0;
 
-    // 2. Validasi Pembayaran
-    const nominalBayar = Number(document.getElementById('bayar-input')?.value || totalBayar || 0);
-    if (nominalBayar < totalBelanja) {
-        alert("Uang pembayaran kurang dari total belanja!");
-        return;
-    }
+            if (metodePembayaran === 'TUNAI' && tunai < res.totalFinal) {
+                alert("Uang tunai kurang dari total tagihan!");
+                return;
+            }
 
-    const transactionId = Date.now().toString();
-    const waktuSekarang = new Date().toLocaleString('id-ID');
-    const kembalian = nominalBayar - totalBelanja;
+            for (let item of keranjang) {
+                const prod = produkList.find(p => String(p.id) === String(item.id));
+                if (prod) {
+                    if (item.qty > prod.stock) {
+                        alert(`Stok ${prod.name} tidak mencukupi! Sisa stok: ${prod.stock}`);
+                        return;
+                    }
+                    prod.stock -= item.qty;
+                }
+            }
 
-    const transaksiBaru = {
-        id: transactionId,
-        waktu: waktuSekarang,
-        items: keranjang,
-        total: Number(totalBelanja || 0),
-        bayar: nominalBayar,
-        kembali: Number(kembalian || 0),
-        margin: Number(totalLaba || 0),
-        metode: metodePembayaran || 'TUNAI',
-        timestamp: Date.now()
-    };
+            const sekarang = new Date();
+            const dataStruk = {
+                id: Date.now(),
+                items: JSON.parse(JSON.stringify(keranjang)),
+                subtotalNormal: res.subtotalNormal,
+                potongan: res.totalPotongan,
+                total: res.totalFinal,
+                modal: res.totalModal,
+                margin: res.totalMargin,
+                metode: metodePembayaran,
+                tunai: metodePembayaran === 'TUNAI' ? tunai : res.totalFinal,
+                kembalian: metodePembayaran === 'TUNAI' ? (tunai - res.totalFinal) : 0,
+                waktu: sekarang.toLocaleString('id-ID'),
+                timestamp: sekarang.toISOString()
+            };
 
-    try {
-        // 3. Simpan ke Firebase Realtime Database
-        if (typeof firebase !== 'undefined' && firebase.database) {
-            await firebase.database().ref('laporanList/' + transactionId).set(transaksiBaru);
-        } else if (typeof db !== 'undefined' && db.ref) {
-            await db.ref('laporanList/' + transactionId).set(transaksiBaru);
+            laporanList.unshift(dataStruk);
+            simpanLocalProduk();
+            simpanLocalLaporan();
+
+            keranjang = [];
+            muatKeranjang();
+            muatProdukKasir();
+            muatTabelStok();
+            if (inputTunai) inputTunai.value = '';
+
+            bukaModalStruk(dataStruk);
         }
-
-        // 4. Simpan ke memori lokal
-        if (typeof laporanList !== 'undefined') {
-            laporanList.unshift(transaksiBaru);
-            localStorage.setItem('laporanList', JSON.stringify(laporanList));
-        }
-
-        alert("Transaksi Berhasil!");
-
-        // 5. Reset Tampilan
-        keranjang = [];
-        if (typeof updateTampilanKeranjang === 'function') updateTampilanKeranjang();
-        if (typeof cetakStruk === 'function') cetakStruk(transaksiBaru);
-
-    } catch (error) {
-        console.error("Error Transaksi:", error);
-        alert("Terjadi kesalahan saat memproses transaksi: " + error.message);
-    }
-}
 
         function bukaModalStruk(tx) {
             const preview = document.getElementById('preview-struk-modal');
@@ -2404,123 +2401,145 @@ async function prosesTransaksi() {
             muatLaporan();
         }
 
-        async function muatLaporan() {
-    const listStrukContainer = document.getElementById('list-laporan');
-    if (listStrukContainer) listStrukContainer.innerHTML = '<p class="text-center text-xs text-slate-400 py-4">Memuat transaksi dari Firebase...</p>';
+        function muatLaporan() {
+            const listStrukContainer = document.getElementById('list-laporan');
+            const listMasukContainer = document.getElementById('list-laporan-masuk');
+            const listPakaiContainer = document.getElementById('list-laporan-pakai');
+            
+            if (listStrukContainer) listStrukContainer.innerHTML = '';
+            if (listMasukContainer) listMasukContainer.innerHTML = '';
+            if (listPakaiContainer) listPakaiContainer.innerHTML = '';
 
-    try {
-        // Ambil data dari node 'laporanList' di Firebase Realtime Database
-        let snapshot;
-        if (typeof firebase !== 'undefined' && firebase.database) {
-            snapshot = await firebase.database().ref('laporanList').once('value');
-        } else if (typeof db !== 'undefined' && db.ref) {
-            snapshot = await db.ref('laporanList').once('value');
-        }
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
 
-        laporanList = [];
-        if (snapshot && snapshot.exists()) {
-            const dataVal = snapshot.val();
-            Object.keys(dataVal).forEach(key => {
-                laporanList.push({ firebaseId: key, ...dataVal[key] });
-            });
-            // Urutkan dari transaksi terbaru
-            laporanList.sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
-        }
+            let filteredTx = laporanList;
+            let filteredMasuk = barangMasukList;
+            let filteredPakai = pakaiSendiriList;
 
-    } catch (error) {
-        console.error("Gagal mengambil data dari Firebase:", error);
-    }
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                start.setHours(0,0,0,0);
+                const end = new Date(endDate);
+                end.setHours(23,59,59,999);
 
-    // Filter Tanggal
-    const startDateInput = document.getElementById('filter-start-date')?.value;
-    const endDateInput = document.getElementById('filter-end-date')?.value;
+                filteredTx = laporanList.filter(item => {
+                    const d = item.timestamp ? new Date(item.timestamp) : new Date(item.id);
+                    return d >= start && d <= end;
+                });
+                filteredMasuk = barangMasukList.filter(item => {
+                    const d = item.timestamp ? new Date(item.timestamp) : new Date(item.id);
+                    return d >= start && d <= end;
+                });
+                filteredPakai = pakaiSendiriList.filter(item => {
+                    const d = item.timestamp ? new Date(item.timestamp) : new Date(item.id);
+                    return d >= start && d <= end;
+                });
+            }
 
-    let filteredTx = laporanList;
-    let filteredMasuk = barangMasukList || [];
-    let filteredPakai = pakaiSendiriList || [];
+            let totalOmset = 0;
+            let totalMargin = 0;
+            let totalQrisSales = 0;
+            let totalRestokModal = 0;
+            let totalPakaiModal = 0;
 
-    if (startDateInput && endDateInput) {
-        const start = new Date(startDateInput);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(endDateInput);
-        end.setHours(23, 59, 59, 999);
-
-        filteredTx = laporanList.filter(item => {
-            const itemDate = new Date(Number(item.id || item.timestamp));
-            return itemDate >= start && itemDate <= end;
-        });
-    }
-
-    // Hitung Total Ringkasan
-    let totalOmset = 0;
-    let totalMargin = 0;
-    let totalQrisSales = 0;
-    let totalRestokModal = 0;
-    let totalPakaiModal = 0;
-
-    filteredTx.forEach(t => {
-        totalOmset += Number(t.total || 0);
-        totalMargin += Number(t.margin || 0);
-        if (t.metode === 'QRIS') totalQrisSales += Number(t.total || 0);
-    });
-
-    filteredMasuk.forEach(m => totalRestokModal += Number(m.totalModal || 0));
-    filteredPakai.forEach(p => totalPakaiModal += Number(p.totalModal || 0));
-
-    // Update Angka di Tampilan UI
-    if (document.getElementById('stat-total-tx')) document.getElementById('stat-total-tx').innerText = filteredTx.length;
-    if (document.getElementById('stat-total-omset')) document.getElementById('stat-total-omset').innerText = formatRupiah(totalOmset);
-    if (document.getElementById('stat-total-margin')) document.getElementById('stat-total-margin').innerText = formatRupiah(totalMargin);
-    if (document.getElementById('stat-sales-qris')) document.getElementById('stat-sales-qris').innerText = formatRupiah(totalQrisSales);
-    if (document.getElementById('stat-total-restok-modal')) document.getElementById('stat-total-restok-modal').innerText = formatRupiah(totalRestokModal);
-    if (document.getElementById('stat-total-pakai-modal')) document.getElementById('stat-total-pakai-modal').innerText = formatRupiah(totalPakaiModal);
-
-    // Render List Struk Transaksi
-    if (listStrukContainer) {
-        listStrukContainer.innerHTML = '';
-        if (filteredTx.length === 0) {
-            listStrukContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Belum ada riwayat transaksi penjualan</p>`;
-        } else {
             filteredTx.forEach(t => {
-                const div = document.createElement('div');
-                div.className = "py-2.5 space-y-1 text-xs border-b border-slate-100";
-                div.innerHTML = `
-                    <div class="flex justify-between font-bold text-slate-800">
-                        <span><i class="fa-solid fa-receipt text-indigo-600 mr-1"></i> Struk #${(t.id || '').toString().slice(-6)}</span>
-                        <span class="text-indigo-600">${formatRupiah(t.total || 0)}</span>
-                    </div>
-                    <div class="flex justify-between text-[11px] text-slate-600">
-                        <span>Metode: <b>${t.metode || 'TUNAI'}</b> | Laba: <b class="text-emerald-600">${formatRupiah(t.margin || 0)}</b></span>
-                        <span>${t.waktu || '-'}</span>
-                    </div>
-                `;
-                listStrukContainer.appendChild(div);
+                totalOmset += Number(t.total || 0);
+                totalMargin += Number(t.margin || 0);
+                if (t.metode === 'QRIS') {
+                    totalQrisSales += Number(t.total || 0);
+                }
             });
+
+            filteredMasuk.forEach(m => {
+                totalRestokModal += Number(m.totalModal || 0);
+            });
+
+            filteredPakai.forEach(p => {
+                totalPakaiModal += Number(p.totalModal || 0);
+            });
+
+            document.getElementById('stat-total-tx').innerText = filteredTx.length;
+            document.getElementById('stat-total-omset').innerText = formatRupiah(totalOmset);
+            document.getElementById('stat-total-margin').innerText = formatRupiah(totalMargin);
+            document.getElementById('stat-sales-qris').innerText = formatRupiah(totalQrisSales);
+            document.getElementById('stat-total-restok-modal').innerText = formatRupiah(totalRestokModal);
+            document.getElementById('stat-total-pakai-modal').innerText = formatRupiah(totalPakaiModal);
+
+            if (filteredTx.length === 0) {
+                if (listStrukContainer) listStrukContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Belum ada riwayat struk</p>`;
+            } else {
+                filteredTx.forEach(t => {
+                    const div = document.createElement('div');
+                    div.className = "py-2.5 space-y-1 text-xs border-b border-slate-100";
+                    div.innerHTML = `
+                        <div class="flex justify-between font-bold text-slate-800">
+                            <span><i class="fa-solid fa-receipt text-indigo-600 mr-1"></i> Struk #${t.id.toString().slice(-6)} (${t.items.length} item)</span>
+                            <span class="text-indigo-600">${formatRupiah(t.total)}</span>
+                        </div>
+                        <div class="flex justify-between text-[11px] text-slate-600">
+                            <span>Metode: <b>${t.metode}</b> | Laba: <b class="text-emerald-600">${formatRupiah(t.margin)}</b></span>
+                            <span>${t.waktu}</span>
+                        </div>
+                        <div class="flex justify-end gap-2 pt-1">
+                            <button onclick="cetakStrukUlang(${t.id})" class="text-indigo-600 hover:underline font-semibold"><i class="fa-solid fa-print"></i> Cetak Ulang</button>
+                            <button onclick="hapusLaporanItem(${t.id})" class="text-red-500 hover:underline font-semibold"><i class="fa-solid fa-trash"></i> Hapus</button>
+                        </div>
+                    `;
+                    listStrukContainer.appendChild(div);
+                });
+            }
+
+            if (filteredMasuk.length === 0) {
+                if (listMasukContainer) listMasukContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Belum ada riwayat restok</p>`;
+            } else {
+                filteredMasuk.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = "py-2 space-y-0.5 text-xs border-b border-slate-100";
+                    div.innerHTML = `
+                        <div class="flex justify-between font-bold text-slate-800">
+                            <span>+${m.qty} pcs <b>${m.barangNama}</b></span>
+                            <span class="text-indigo-600">${formatRupiah(m.totalModal)}</span>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-500">
+                            <span>Catatan: ${m.catatan}</span>
+                            <span>${m.waktu}</span>
+                        </div>
+                    `;
+                    listMasukContainer.appendChild(div);
+                });
+            }
+
+            if (filteredPakai.length === 0) {
+                if (listPakaiContainer) listPakaiContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Belum ada riwayat pemakaian sendiri</p>`;
+            } else {
+                filteredPakai.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = "py-2 space-y-0.5 text-xs border-b border-slate-100";
+                    div.innerHTML = `
+                        <div class="flex justify-between font-bold text-slate-800">
+                            <span>-${p.qty} pcs <b>${p.barangNama}</b></span>
+                            <span class="text-amber-600">${formatRupiah(p.totalModal)}</span>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-500">
+                            <span>Keperluan: ${p.catatan}</span>
+                            <span>${p.waktu}</span>
+                        </div>
+                    `;
+                    listPakaiContainer.appendChild(div);
+                });
+            }
+
+            muatAnalisisFastSlow(filteredTx);
+            muatRekapItemsGrouped(filteredTx);
         }
-    }
-}
 
-        async function hapusLaporanItem(id) {
-    if (!confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) return;
-
-    try {
-        // Hapus dari Firebase Realtime Database
-        if (typeof firebase !== 'undefined' && firebase.database) {
-            await firebase.database().ref('laporanList/' + id).remove();
-        } else if (typeof db !== 'undefined' && db.ref) {
-            await db.ref('laporanList/' + id).remove();
+        function hapusLaporanItem(id) {
+            if (confirm("Hapus riwayat struk transaksi ini?")) {
+                laporanList = laporanList.filter(item => Number(item.id) !== Number(id));
+                simpanLocalLaporan();
+            }
         }
-
-        // Refresh tampilan laporan
-        muatLaporan();
-        alert("Transaksi berhasil dihapus dari Cloud!");
-
-    } catch (error) {
-        console.error("Gagal menghapus dari Firebase:", error);
-        alert("Gagal menghapus data: " + error.message);
-    }
-}
-
 
         function hapusSemuaLaporan() {
             if (confirm("Yakin ingin menghapus seluruh riwayat penjualan kasir?")) {
