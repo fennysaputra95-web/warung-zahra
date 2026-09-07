@@ -2401,138 +2401,96 @@
             muatLaporan();
         }
 
-        function muatLaporan() {
-            const listStrukContainer = document.getElementById('list-laporan');
-            const listMasukContainer = document.getElementById('list-laporan-masuk');
-            const listPakaiContainer = document.getElementById('list-laporan-pakai');
-            
-            if (listStrukContainer) listStrukContainer.innerHTML = '';
-            if (listMasukContainer) listMasukContainer.innerHTML = '';
-            if (listPakaiContainer) listPakaiContainer.innerHTML = '';
+        
+            async function muatLaporan() {
+    const listStrukContainer = document.getElementById('list-laporan');
+    if (listStrukContainer) listStrukContainer.innerHTML = '<p class="text-center text-xs text-slate-400 py-4">Memuat transaksi dari Firebase...</p>';
 
-            const startDate = document.getElementById('filter-start-date').value;
-            const endDate = document.getElementById('filter-end-date').value;
+    try {
+        // 1. TARIK DATA TRANSAKSI LANGSUNG DARI FIRESTORE
+        const snapshot = await firebase.firestore().collection("laporan").get();
+        
+        laporanList = [];
+        snapshot.forEach((doc) => {
+            laporanList.push({ firebaseId: doc.id, ...doc.data() });
+        });
 
-            let filteredTx = laporanList;
-            let filteredMasuk = barangMasukList;
-            let filteredPakai = pakaiSendiriList;
+        console.log("Data Laporan Berhasil Ditarik:", laporanList);
 
-            if (startDate && endDate) {
-                const start = new Date(startDate);
-                start.setHours(0,0,0,0);
-                const end = new Date(endDate);
-                end.setHours(23,59,59,999);
+    } catch (error) {
+        console.error("Gagal koneksi Firebase Laporan:", error);
+        alert("Gagal mengambil data laporan dari Firebase: " + error.message);
+    }
 
-                filteredTx = laporanList.filter(item => {
-                    const d = item.timestamp ? new Date(item.timestamp) : new Date(item.id);
-                    return d >= start && d <= end;
-                });
-                filteredMasuk = barangMasukList.filter(item => {
-                    const d = item.timestamp ? new Date(item.timestamp) : new Date(item.id);
-                    return d >= start && d <= end;
-                });
-                filteredPakai = pakaiSendiriList.filter(item => {
-                    const d = item.timestamp ? new Date(item.timestamp) : new Date(item.id);
-                    return d >= start && d <= end;
-                });
-            }
+    // 2. BACA FILTER TANGGAL
+    const startDateInput = document.getElementById('filter-start-date')?.value;
+    const endDateInput = document.getElementById('filter-end-date')?.value;
 
-            let totalOmset = 0;
-            let totalMargin = 0;
-            let totalQrisSales = 0;
-            let totalRestokModal = 0;
-            let totalPakaiModal = 0;
+    let filteredTx = laporanList;
+    let filteredMasuk = barangMasukList || [];
+    let filteredPakai = pakaiSendiriList || [];
 
+    // Filter HANYA jika kedua tanggal diisi oleh pengguna
+    if (startDateInput && endDateInput) {
+        const start = new Date(startDateInput);
+        start.setHours(0,0,0,0);
+        const end = new Date(endDateInput);
+        end.setHours(23,59,59,999);
+
+        filteredTx = laporanList.filter(item => {
+            let itemDate = item.timestamp ? new Date(item.timestamp) : new Date(Number(item.id) || Date.now());
+            return itemDate >= start && itemDate <= end;
+        });
+    }
+
+    // 3. HITUNG ANGKA STATISTIK
+    let totalOmset = 0;
+    let totalMargin = 0;
+    let totalQrisSales = 0;
+    let totalRestokModal = 0;
+    let totalPakaiModal = 0;
+
+    filteredTx.forEach(t => {
+        totalOmset += Number(t.total || 0);
+        totalMargin += Number(t.margin || 0);
+        if (t.metode === 'QRIS') totalQrisSales += Number(t.total || 0);
+    });
+
+    filteredMasuk.forEach(m => totalRestokModal += Number(m.totalModal || 0));
+    filteredPakai.forEach(p => totalPakaiModal += Number(p.totalModal || 0));
+
+    // 4. DISPLAY KE WIDGET RINGKASAN
+    if (document.getElementById('stat-total-tx')) document.getElementById('stat-total-tx').innerText = filteredTx.length;
+    if (document.getElementById('stat-total-omset')) document.getElementById('stat-total-omset').innerText = formatRupiah(totalOmset);
+    if (document.getElementById('stat-total-margin')) document.getElementById('stat-total-margin').innerText = formatRupiah(totalMargin);
+    if (document.getElementById('stat-sales-qris')) document.getElementById('stat-sales-qris').innerText = formatRupiah(totalQrisSales);
+    if (document.getElementById('stat-total-restok-modal')) document.getElementById('stat-total-restok-modal').innerText = formatRupiah(totalRestokModal);
+    if (document.getElementById('stat-total-pakai-modal')) document.getElementById('stat-total-pakai-modal').innerText = formatRupiah(totalPakaiModal);
+
+    // 5. RENDER DAFTAR STRUK DI BAGIAN BAWAH
+    if (listStrukContainer) {
+        listStrukContainer.innerHTML = '';
+        if (filteredTx.length === 0) {
+            listStrukContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Tidak ada riwayat transaksi penjualan</p>`;
+        } else {
             filteredTx.forEach(t => {
-                totalOmset += Number(t.total || 0);
-                totalMargin += Number(t.margin || 0);
-                if (t.metode === 'QRIS') {
-                    totalQrisSales += Number(t.total || 0);
-                }
+                const div = document.createElement('div');
+                div.className = "py-2.5 space-y-1 text-xs border-b border-slate-100";
+                div.innerHTML = `
+                    <div class="flex justify-between font-bold text-slate-800">
+                        <span><i class="fa-solid fa-receipt text-indigo-600 mr-1"></i> Struk #${(t.id || '').toString().slice(-6)}</span>
+                        <span class="text-indigo-600">${formatRupiah(t.total || 0)}</span>
+                    </div>
+                    <div class="flex justify-between text-[11px] text-slate-600">
+                        <span>Metode: <b>${t.metode || 'TUNAI'}</b> | Laba: <b class="text-emerald-600">${formatRupiah(t.margin || 0)}</b></span>
+                        <span>${t.waktu || '-'}</span>
+                    </div>
+                `;
+                listStrukContainer.appendChild(div);
             });
-
-            filteredMasuk.forEach(m => {
-                totalRestokModal += Number(m.totalModal || 0);
-            });
-
-            filteredPakai.forEach(p => {
-                totalPakaiModal += Number(p.totalModal || 0);
-            });
-
-            document.getElementById('stat-total-tx').innerText = filteredTx.length;
-            document.getElementById('stat-total-omset').innerText = formatRupiah(totalOmset);
-            document.getElementById('stat-total-margin').innerText = formatRupiah(totalMargin);
-            document.getElementById('stat-sales-qris').innerText = formatRupiah(totalQrisSales);
-            document.getElementById('stat-total-restok-modal').innerText = formatRupiah(totalRestokModal);
-            document.getElementById('stat-total-pakai-modal').innerText = formatRupiah(totalPakaiModal);
-
-            if (filteredTx.length === 0) {
-                if (listStrukContainer) listStrukContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Belum ada riwayat struk</p>`;
-            } else {
-                filteredTx.forEach(t => {
-                    const div = document.createElement('div');
-                    div.className = "py-2.5 space-y-1 text-xs border-b border-slate-100";
-                    div.innerHTML = `
-                        <div class="flex justify-between font-bold text-slate-800">
-                            <span><i class="fa-solid fa-receipt text-indigo-600 mr-1"></i> Struk #${t.id.toString().slice(-6)} (${t.items.length} item)</span>
-                            <span class="text-indigo-600">${formatRupiah(t.total)}</span>
-                        </div>
-                        <div class="flex justify-between text-[11px] text-slate-600">
-                            <span>Metode: <b>${t.metode}</b> | Laba: <b class="text-emerald-600">${formatRupiah(t.margin)}</b></span>
-                            <span>${t.waktu}</span>
-                        </div>
-                        <div class="flex justify-end gap-2 pt-1">
-                            <button onclick="cetakStrukUlang(${t.id})" class="text-indigo-600 hover:underline font-semibold"><i class="fa-solid fa-print"></i> Cetak Ulang</button>
-                            <button onclick="hapusLaporanItem(${t.id})" class="text-red-500 hover:underline font-semibold"><i class="fa-solid fa-trash"></i> Hapus</button>
-                        </div>
-                    `;
-                    listStrukContainer.appendChild(div);
-                });
-            }
-
-            if (filteredMasuk.length === 0) {
-                if (listMasukContainer) listMasukContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Belum ada riwayat restok</p>`;
-            } else {
-                filteredMasuk.forEach(m => {
-                    const div = document.createElement('div');
-                    div.className = "py-2 space-y-0.5 text-xs border-b border-slate-100";
-                    div.innerHTML = `
-                        <div class="flex justify-between font-bold text-slate-800">
-                            <span>+${m.qty} pcs <b>${m.barangNama}</b></span>
-                            <span class="text-indigo-600">${formatRupiah(m.totalModal)}</span>
-                        </div>
-                        <div class="flex justify-between text-[10px] text-slate-500">
-                            <span>Catatan: ${m.catatan}</span>
-                            <span>${m.waktu}</span>
-                        </div>
-                    `;
-                    listMasukContainer.appendChild(div);
-                });
-            }
-
-            if (filteredPakai.length === 0) {
-                if (listPakaiContainer) listPakaiContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Belum ada riwayat pemakaian sendiri</p>`;
-            } else {
-                filteredPakai.forEach(p => {
-                    const div = document.createElement('div');
-                    div.className = "py-2 space-y-0.5 text-xs border-b border-slate-100";
-                    div.innerHTML = `
-                        <div class="flex justify-between font-bold text-slate-800">
-                            <span>-${p.qty} pcs <b>${p.barangNama}</b></span>
-                            <span class="text-amber-600">${formatRupiah(p.totalModal)}</span>
-                        </div>
-                        <div class="flex justify-between text-[10px] text-slate-500">
-                            <span>Keperluan: ${p.catatan}</span>
-                            <span>${p.waktu}</span>
-                        </div>
-                    `;
-                    listPakaiContainer.appendChild(div);
-                });
-            }
-
-            muatAnalisisFastSlow(filteredTx);
-            muatRekapItemsGrouped(filteredTx);
         }
+    }
+}
 
         function hapusLaporanItem(id) {
             if (confirm("Hapus riwayat struk transaksi ini?")) {
