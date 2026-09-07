@@ -2128,21 +2128,31 @@
             }
         }
 
-        async function prosesTransaksi() {
+
+async function prosesTransaksi() {
+    // 1. Validasi Keranjang
     if (!keranjang || keranjang.length === 0) {
         alert("Keranjang belanja masih kosong!");
         return;
     }
 
+    // 2. Validasi Pembayaran
+    const nominalBayar = Number(document.getElementById('bayar-input')?.value || totalBayar || 0);
+    if (nominalBayar < totalBelanja) {
+        alert("Uang pembayaran kurang dari total belanja!");
+        return;
+    }
+
     const transactionId = Date.now().toString();
     const waktuSekarang = new Date().toLocaleString('id-ID');
+    const kembalian = nominalBayar - totalBelanja;
 
     const transaksiBaru = {
         id: transactionId,
         waktu: waktuSekarang,
         items: keranjang,
         total: Number(totalBelanja || 0),
-        bayar: Number(totalBayar || 0),
+        bayar: nominalBayar,
         kembali: Number(kembalian || 0),
         margin: Number(totalLaba || 0),
         metode: metodePembayaran || 'TUNAI',
@@ -2150,32 +2160,31 @@
     };
 
     try {
-        // Simpan langsung ke Firebase Realtime Database
+        // 3. Simpan ke Firebase Realtime Database
         if (typeof firebase !== 'undefined' && firebase.database) {
             await firebase.database().ref('laporanList/' + transactionId).set(transaksiBaru);
         } else if (typeof db !== 'undefined' && db.ref) {
             await db.ref('laporanList/' + transactionId).set(transaksiBaru);
         }
 
-        // Cadangan ke memori lokal
+        // 4. Simpan ke memori lokal
         if (typeof laporanList !== 'undefined') {
             laporanList.unshift(transaksiBaru);
             localStorage.setItem('laporanList', JSON.stringify(laporanList));
         }
 
-        alert("Transaksi berhasil diselesaikan dan tersimpan ke Cloud!");
+        alert("Transaksi Berhasil!");
 
-        // Reset keranjang
+        // 5. Reset Tampilan
         keranjang = [];
         if (typeof updateTampilanKeranjang === 'function') updateTampilanKeranjang();
         if (typeof cetakStruk === 'function') cetakStruk(transaksiBaru);
 
     } catch (error) {
-        console.error("Gagal menyimpan ke Firebase:", error);
-        alert("Gagal menyimpan ke Firebase: " + error.message);
+        console.error("Error Transaksi:", error);
+        alert("Terjadi kesalahan saat memproses transaksi: " + error.message);
     }
 }
-
 
         function bukaModalStruk(tx) {
             const preview = document.getElementById('preview-struk-modal');
