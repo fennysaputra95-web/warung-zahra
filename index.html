@@ -2128,60 +2128,54 @@
             }
         }
 
-        function prosesTransaksi() {
-            if (keranjang.length === 0) {
-                alert("Keranjang masih kosong!");
-                return;
-            }
+        async function prosesTransaksi() {
+    if (!keranjang || keranjang.length === 0) {
+        alert("Keranjang belanja masih kosong!");
+        return;
+    }
 
-            const res = getTotalHargaFinal();
-            const inputTunai = document.getElementById('input-tunai');
-            const tunai = inputTunai ? Number(inputTunai.value) || 0 : 0;
+    const transactionId = Date.now().toString();
+    const waktuSekarang = new Date().toLocaleString('id-ID');
 
-            if (metodePembayaran === 'TUNAI' && tunai < res.totalFinal) {
-                alert("Uang tunai kurang dari total tagihan!");
-                return;
-            }
+    const transaksiBaru = {
+        id: transactionId,
+        waktu: waktuSekarang,
+        items: keranjang,
+        total: Number(totalBelanja || 0),
+        bayar: Number(totalBayar || 0),
+        kembali: Number(kembalian || 0),
+        margin: Number(totalLaba || 0),
+        metode: metodePembayaran || 'TUNAI',
+        timestamp: Date.now()
+    };
 
-            for (let item of keranjang) {
-                const prod = produkList.find(p => String(p.id) === String(item.id));
-                if (prod) {
-                    if (item.qty > prod.stock) {
-                        alert(`Stok ${prod.name} tidak mencukupi! Sisa stok: ${prod.stock}`);
-                        return;
-                    }
-                    prod.stock -= item.qty;
-                }
-            }
-
-            const sekarang = new Date();
-            const dataStruk = {
-                id: Date.now(),
-                items: JSON.parse(JSON.stringify(keranjang)),
-                subtotalNormal: res.subtotalNormal,
-                potongan: res.totalPotongan,
-                total: res.totalFinal,
-                modal: res.totalModal,
-                margin: res.totalMargin,
-                metode: metodePembayaran,
-                tunai: metodePembayaran === 'TUNAI' ? tunai : res.totalFinal,
-                kembalian: metodePembayaran === 'TUNAI' ? (tunai - res.totalFinal) : 0,
-                waktu: sekarang.toLocaleString('id-ID'),
-                timestamp: sekarang.toISOString()
-            };
-
-            laporanList.unshift(dataStruk);
-            simpanLocalProduk();
-            simpanLocalLaporan();
-
-            keranjang = [];
-            muatKeranjang();
-            muatProdukKasir();
-            muatTabelStok();
-            if (inputTunai) inputTunai.value = '';
-
-            bukaModalStruk(dataStruk);
+    try {
+        // Simpan langsung ke Firebase Realtime Database
+        if (typeof firebase !== 'undefined' && firebase.database) {
+            await firebase.database().ref('laporanList/' + transactionId).set(transaksiBaru);
+        } else if (typeof db !== 'undefined' && db.ref) {
+            await db.ref('laporanList/' + transactionId).set(transaksiBaru);
         }
+
+        // Cadangan ke memori lokal
+        if (typeof laporanList !== 'undefined') {
+            laporanList.unshift(transaksiBaru);
+            localStorage.setItem('laporanList', JSON.stringify(laporanList));
+        }
+
+        alert("Transaksi berhasil diselesaikan dan tersimpan ke Cloud!");
+
+        // Reset keranjang
+        keranjang = [];
+        if (typeof updateTampilanKeranjang === 'function') updateTampilanKeranjang();
+        if (typeof cetakStruk === 'function') cetakStruk(transaksiBaru);
+
+    } catch (error) {
+        console.error("Gagal menyimpan ke Firebase:", error);
+        alert("Gagal menyimpan ke Firebase: " + error.message);
+    }
+}
+
 
         function bukaModalStruk(tx) {
             const preview = document.getElementById('preview-struk-modal');
@@ -2401,28 +2395,34 @@
             muatLaporan();
         }
 
-        
-            async function muatLaporan() {
+        async function muatLaporan() {
     const listStrukContainer = document.getElementById('list-laporan');
     if (listStrukContainer) listStrukContainer.innerHTML = '<p class="text-center text-xs text-slate-400 py-4">Memuat transaksi dari Firebase...</p>';
 
     try {
-        // 1. TARIK DATA TRANSAKSI LANGSUNG DARI FIRESTORE
-        const snapshot = await firebase.firestore().collection("laporan").get();
-        
-        laporanList = [];
-        snapshot.forEach((doc) => {
-            laporanList.push({ firebaseId: doc.id, ...doc.data() });
-        });
+        // Ambil data dari node 'laporanList' di Firebase Realtime Database
+        let snapshot;
+        if (typeof firebase !== 'undefined' && firebase.database) {
+            snapshot = await firebase.database().ref('laporanList').once('value');
+        } else if (typeof db !== 'undefined' && db.ref) {
+            snapshot = await db.ref('laporanList').once('value');
+        }
 
-        console.log("Data Laporan Berhasil Ditarik:", laporanList);
+        laporanList = [];
+        if (snapshot && snapshot.exists()) {
+            const dataVal = snapshot.val();
+            Object.keys(dataVal).forEach(key => {
+                laporanList.push({ firebaseId: key, ...dataVal[key] });
+            });
+            // Urutkan dari transaksi terbaru
+            laporanList.sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+        }
 
     } catch (error) {
-        console.error("Gagal koneksi Firebase Laporan:", error);
-        alert("Gagal mengambil data laporan dari Firebase: " + error.message);
+        console.error("Gagal mengambil data dari Firebase:", error);
     }
 
-    // 2. BACA FILTER TANGGAL
+    // Filter Tanggal
     const startDateInput = document.getElementById('filter-start-date')?.value;
     const endDateInput = document.getElementById('filter-end-date')?.value;
 
@@ -2430,20 +2430,19 @@
     let filteredMasuk = barangMasukList || [];
     let filteredPakai = pakaiSendiriList || [];
 
-    // Filter HANYA jika kedua tanggal diisi oleh pengguna
     if (startDateInput && endDateInput) {
         const start = new Date(startDateInput);
-        start.setHours(0,0,0,0);
+        start.setHours(0, 0, 0, 0);
         const end = new Date(endDateInput);
-        end.setHours(23,59,59,999);
+        end.setHours(23, 59, 59, 999);
 
         filteredTx = laporanList.filter(item => {
-            let itemDate = item.timestamp ? new Date(item.timestamp) : new Date(Number(item.id) || Date.now());
+            const itemDate = new Date(Number(item.id || item.timestamp));
             return itemDate >= start && itemDate <= end;
         });
     }
 
-    // 3. HITUNG ANGKA STATISTIK
+    // Hitung Total Ringkasan
     let totalOmset = 0;
     let totalMargin = 0;
     let totalQrisSales = 0;
@@ -2459,7 +2458,7 @@
     filteredMasuk.forEach(m => totalRestokModal += Number(m.totalModal || 0));
     filteredPakai.forEach(p => totalPakaiModal += Number(p.totalModal || 0));
 
-    // 4. DISPLAY KE WIDGET RINGKASAN
+    // Update Angka di Tampilan UI
     if (document.getElementById('stat-total-tx')) document.getElementById('stat-total-tx').innerText = filteredTx.length;
     if (document.getElementById('stat-total-omset')) document.getElementById('stat-total-omset').innerText = formatRupiah(totalOmset);
     if (document.getElementById('stat-total-margin')) document.getElementById('stat-total-margin').innerText = formatRupiah(totalMargin);
@@ -2467,11 +2466,11 @@
     if (document.getElementById('stat-total-restok-modal')) document.getElementById('stat-total-restok-modal').innerText = formatRupiah(totalRestokModal);
     if (document.getElementById('stat-total-pakai-modal')) document.getElementById('stat-total-pakai-modal').innerText = formatRupiah(totalPakaiModal);
 
-    // 5. RENDER DAFTAR STRUK DI BAGIAN BAWAH
+    // Render List Struk Transaksi
     if (listStrukContainer) {
         listStrukContainer.innerHTML = '';
         if (filteredTx.length === 0) {
-            listStrukContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Tidak ada riwayat transaksi penjualan</p>`;
+            listStrukContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Belum ada riwayat transaksi penjualan</p>`;
         } else {
             filteredTx.forEach(t => {
                 const div = document.createElement('div');
@@ -2492,12 +2491,27 @@
     }
 }
 
-        function hapusLaporanItem(id) {
-            if (confirm("Hapus riwayat struk transaksi ini?")) {
-                laporanList = laporanList.filter(item => Number(item.id) !== Number(id));
-                simpanLocalLaporan();
-            }
+        async function hapusLaporanItem(id) {
+    if (!confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) return;
+
+    try {
+        // Hapus dari Firebase Realtime Database
+        if (typeof firebase !== 'undefined' && firebase.database) {
+            await firebase.database().ref('laporanList/' + id).remove();
+        } else if (typeof db !== 'undefined' && db.ref) {
+            await db.ref('laporanList/' + id).remove();
         }
+
+        // Refresh tampilan laporan
+        muatLaporan();
+        alert("Transaksi berhasil dihapus dari Cloud!");
+
+    } catch (error) {
+        console.error("Gagal menghapus dari Firebase:", error);
+        alert("Gagal menghapus data: " + error.message);
+    }
+}
+
 
         function hapusSemuaLaporan() {
             if (confirm("Yakin ingin menghapus seluruh riwayat penjualan kasir?")) {
