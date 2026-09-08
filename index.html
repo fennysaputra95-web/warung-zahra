@@ -451,7 +451,6 @@
                     <button id="subtab-lap-struk" onclick="gantiSubtabLaporan('struk')" class="pb-2 border-b-2 border-transparent text-slate-500 hover:text-indigo-600 whitespace-nowrap">
                         <i class="fa-solid fa-receipt text-indigo-500"></i> Riwayat Struk
                     </button>
-                    
                 </div>
 
                 <div id="sec-lap-ringkasan" class="space-y-3">
@@ -974,11 +973,10 @@
             });
 
             db.ref('laporanList').on('value', (snapshot) => {
-    const data = snapshot.val();
-    laporanList = data ? Object.values(data) : [];
-    muatLaporan();
-});
-
+                const data = snapshot.val();
+                laporanList = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
+                muatLaporan();
+            });
 
             db.ref('laporanPpobList').on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -1034,28 +1032,12 @@
             if (filterPakai) filterPakai.addEventListener('input', () => filterDropdownModalBarang('pakai'));
         });
 
-        // Menggunakan push() agar data lama TIDAK TERTIMPA saat ada simpanan baru
-function simpanLocalProduk() { 
-    db.ref('produkList').set(produkList); // Produk tetap pakai set jika ingin update katalog utuh
-}
+        function simpanLocalProduk() { db.ref('produkList').set(produkList); }
+        function simpanLocalLaporan() { db.ref('laporanList').set(laporanList); }
+        function simpanLocalLaporanPpob() { db.ref('laporanPpobList').set(laporanPpobList); }
+        function simpanLocalBarangMasuk() { db.ref('barangMasukList').set(barangMasukList); }
+        function simpanLocalPakaiSendiri() { db.ref('pakaiSendiriList').set(pakaiSendiriList); }
 
-function simpanLocalLaporan(itemBaru) { 
-    if(itemBaru) db.ref('laporanList').push(itemBaru); 
-}
-
-function simpanLocalLaporanPpob(itemBaru) { 
-    if(itemBaru) db.ref('laporanPpobList').push(itemBaru); 
-}
-
-function simpanLocalBarangMasuk(itemBaru) { 
-    if(itemBaru) db.ref('barangMasukList').push(itemBaru); 
-}
-
-function simpanLocalPakaiSendiri(itemBaru) { 
-    if(itemBaru) db.ref('pakaiSendiriList').push(itemBaru); 
-}
-
-        
         function formatRupiah(angka) {
             return 'Rp ' + Number(angka || 0).toLocaleString('id-ID');
         }
